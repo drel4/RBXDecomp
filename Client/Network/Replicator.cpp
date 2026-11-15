@@ -557,11 +557,11 @@ bool Replicator::remoteDeleteOnDisconnect(const Instance* instance) const
 	return instance == Players::findLocalCharacter(instance) ? true : false;
 }
 
-// FUNCTION: WEBSERVICE 0x1019cd50
-// FUNCTION: ROBLOX 0x004c36f0
+// STUB: WEBSERVICE 0x1019cd50
+// STUB: ROBLOX 0x004c36f0
 void Peer::Update(RakPeerInterface* peer)
 {
-	profilePacketsThread->sample(static_cast<RakPeer*>(peer)->processPacketsThreadHandle);
+	profilePacketsThread->sample(reinterpret_cast<void*>(static_cast<RakPeer*>(peer)->processPacketsThreadHandle));
 
 	PluginInterface::Update(peer);
 }
@@ -1844,8 +1844,8 @@ void Replicator::onServiceProvider(const ServiceProvider* oldProvider, const Ser
 	}
 }
 
-// FUNCTION: WEBSERVICE 0x101a9020
-// FUNCTION: ROBLOX 0x004d2060
+// STUB: WEBSERVICE 0x101a9020
+// STUB: ROBLOX 0x004d2060
 void Replicator::receiveData(Packet* packet)
 {
 	Profiling::Mark mark(*profileDataIn, false);
@@ -1932,7 +1932,7 @@ PluginReceiveResult Replicator::OnReceive(RakPeerInterface* peer, Packet* packet
 				inBitstream >> remoteScope;
 
 				if (Name::lookup(remoteScope) == Guid::getLocalScope()) {
-					throw std::exception("Remote peer is running in the same process");
+					throw std::runtime_error("Remote peer is running in the same process");
 				}
 
 				TopReplConts::iterator end = topReplicationContainers.end();

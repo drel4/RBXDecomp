@@ -40,8 +40,15 @@ public:
 	ICharacterSubject();
 
 	virtual ContactManager* getContactManager() = 0;                    // vtable+0x18
+#ifdef OPENRBX_NATIVE_SERVER
+	// These hooks have no base implementation. The Itanium ABI emits a
+	// construction vtable even though MSVC's novtable suppresses it.
+	virtual void getIgnorePrims(std::vector<const Primitive*>& prims) = 0;
+	virtual void tellCameraNear(float distance) = 0;
+#else
 	virtual void getIgnorePrims(std::vector<const Primitive*>& prims);  // vtable+0x1c
 	virtual void tellCameraNear(float distance);                        // vtable+0x20
+#endif
 	virtual G3D::Vector3 getIntendedMovementVector() = 0;               // vtable+0x24
 	virtual float getIntendedRotationAboutYAxis() = 0;                  // vtable+0x28
 	virtual void cameraSetWalkOrientation(float angle, bool value) = 0; // vtable+0x2c

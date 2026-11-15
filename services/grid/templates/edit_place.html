@@ -1,0 +1,15 @@
+{% extends 'base.html' %}{% block title %}{{ _("Edit place - notblox") }}{% endblock %}{% block body %}
+<h1>{{ _("Edit place") }}</h1>
+{% if error %}<p class="notice" role="alert">{{ _(error) }}</p>{% endif %}
+<form method="post" action="/manage/{{ place.id }}/edit" enctype="multipart/form-data">
+<input type="hidden" name="csrf" value="{{ session.csrf }}">
+<label for="title">{{ _("Place title") }}</label><input id="title" name="title" value="{{ place.title }}" maxlength="80" required>
+<label for="description">{{ _("Description") }}</label><textarea id="description" name="description" rows="6" cols="60" maxlength="2000">{{ place.description }}</textarea>
+<label for="asset_proxy">{{ _('Asset proxy policy') }}</label>
+<select id="asset_proxy" name="asset_proxy">{% for value,label in [('enabled','Enabled'),('user-choice','User choice'),('disabled','Disabled')] %}<option value="{{ value }}"{% if place.asset_proxy==value %} selected{% endif %}>{{ _(label) }}</option>{% endfor %}</select>
+<p>{{ _('Enabled and Disabled lock the client toggle. User choice respects the saved client setting (off by default). Changes apply to new servers; running servers keep their policy. Thumbnails and servers use the proxy for User choice.') }}</p>
+<label for="place">{{ _("Replace place file (optional, legacy .rbxl / .rbxlx, up to 32 MB)") }}</label><input id="place" name="place" type="file" accept=".rbxl,.rbxlx">
+<p>{{ _("The place keeps its address, publication status and player limit. New servers use the updated map; running servers keep their current map until restarted. Its thumbnail refreshes automatically.") }}</p>
+<p><button type="submit">{{ _("Save changes") }}</button> <a href="/manage">{{ _("Cancel") }}</a></p>
+</form>
+{% endblock %}

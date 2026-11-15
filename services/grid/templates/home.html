@@ -1,0 +1,9 @@
+{% extends 'base.html' %}{% block body %}
+<h1>{{ _("Places") }}</h1>
+{% if not places %}<p>{{ _("No published places yet.") }}</p>{% endif %}
+{% for p in places %}<div class="card">
+<a href="/places/{{ p.id }}"><img src="/thumbs/{{ p.id }}.png" width="288" height="180" alt="{{ p.title }}"></a>
+<h2><a href="/places/{{ p.id }}">{{ p.title }}</a></h2>
+<p>{{ p.description|truncate(120) }}</p><p><a href="/places/{{ p.id }}">{{ _("Play") }}</a></p>
+</div>{% endfor %}
+{% endblock %}

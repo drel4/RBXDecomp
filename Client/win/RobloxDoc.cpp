@@ -6,7 +6,9 @@
 #include "LogManager.h"
 #include "MainFrm.h"
 #include "SaveToRobloxDialog.h"
+#include "network/Player.h"
 #include "network/Players.h"
+#include "resource.h"
 #include "script/LuaMemory.h"
 #include "script/ScriptContext.h"
 #include "util/ContentProvider.h"
@@ -26,8 +28,52 @@
 #include <shlobj.h>
 #include <shlwapi.h>
 #include <sstream>
+#include <set>
+
+// Browser-created games are transient sessions, not editable place documents.
+// Keep this outside the decompiled document layout.
+static std::set<const CRobloxDoc*> onlinePlayDocuments;
+
+bool CRobloxDoc::isOnlinePlay() const
+{
+	return onlinePlayDocuments.count(this) != 0;
+}
+
+void CRobloxDoc::setOnlinePlay()
+{
+	onlinePlayDocuments.insert(this);
+	POSITION pos = GetFirstViewPosition();
+	while (pos) {
+		CFrameWnd* frame = GetNextView(pos)->GetParentFrame();
+		frame->ModifyStyle(FWS_ADDTOTITLE, 0);
+		frame->SetWindowText("");
+	}
+	AfxGetMainWnd()->SendMessage(WM_IDLEUPDATECMDUI);
+}
 
 IMPLEMENT_DYNCREATE(CRobloxDoc, CDocument)
+
+class ScopedRuntimeArchiveExclusion
+{
+public:
+	ScopedRuntimeArchiveExclusion(RBX::Instance* instance) : instance(RBX::shared_from(instance)), archivable(false)
+	{
+		if (instance != NULL) {
+			archivable = RBX::Instance::propArchivable.getValue(instance);
+			RBX::Instance::propArchivable.setValue(instance, false);
+		}
+	}
+	~ScopedRuntimeArchiveExclusion()
+	{
+		if (instance) {
+			RBX::Instance::propArchivable.setValue(instance.get(), archivable);
+		}
+	}
+
+private:
+	boost::shared_ptr<RBX::Instance> instance;
+	bool archivable;
+};
 
 template <class T>
 static T* createService(RBX::DataModel* dataModel)
@@ -215,36 +261,43 @@ static void FUN_00454cb0(const char* file, const char* arguments)
 	}
 }
 
-// FUNCTION: ROBLOX 0x00454e50
+// STUB: ROBLOX 0x00454e50
 void CRobloxDoc::FUN_00454e50()
 {
-	try {
-		FUN_00454cb0(FUN_00454b50(this, "Visit"), " -script " + FUN_00407190() + "/game/visit.ashx");
-	}
-	catch (std::exception& e) {
-		AfxMessageBox(e.what());
+	OnTestLocal();
+}
+
+void CRobloxDoc::launchLocalNetworkTest(int players)
+{
+	// Separate test groups use separate snapshots and ports. The Lua programs
+	// are compiled into this executable, never fetched from a website or txt.
+	unsigned port = 49152 + (GetTickCount() % 16000);
+	CString name, arguments;
+	name.Format("Server%u", port);
+	arguments.Format(" -script openrbx-test-server:%u", port);
+	FUN_00454cb0(FUN_00454b50(this, name), arguments);
+	for (int i = 1; i <= players; ++i) {
+		arguments.Format(" -script openrbx-test-client:%u:%d", port, i);
+		FUN_00454cb0(NULL, arguments);
 	}
 }
 
-// FUNCTION: ROBLOX 0x00454f50
+// STUB: ROBLOX 0x00454f50
 void CRobloxDoc::FUN_00454f50()
 {
 	try {
-		FUN_00454cb0(FUN_00454b50(this, "Server"), " -script " + FUN_00407190() + "/game/gameserver.ashx");
-		FUN_00454cb0(NULL, " -script " + FUN_00407190() + "/game/join.ashx");
+		launchLocalNetworkTest(1);
 	}
 	catch (std::exception& e) {
 		AfxMessageBox(e.what());
 	}
 }
 
-// FUNCTION: ROBLOX 0x004550b0
+// STUB: ROBLOX 0x004550b0
 void CRobloxDoc::FUN_004550b0()
 {
 	try {
-		FUN_00454cb0(FUN_00454b50(this, "Server"), " -script " + FUN_00407190() + "/game/gameserver.ashx");
-		FUN_00454cb0(NULL, " -script " + FUN_00407190() + "/game/join.ashx");
-		FUN_00454cb0(NULL, " -script " + FUN_00407190() + "/game/join.ashx?UserID=0&port=4344");
+		launchLocalNetworkTest(2);
 	}
 	catch (std::exception& e) {
 		AfxMessageBox(e.what());
@@ -353,9 +406,10 @@ void CRobloxDoc::DeleteContents()
 	CDocument::DeleteContents();
 }
 
-// FUNCTION: ROBLOX 0x00456b50
+// STUB: ROBLOX 0x00456b50
 CRobloxDoc::~CRobloxDoc()
 {
+	onlinePlayDocuments.erase(this);
 }
 
 // FUNCTION: ROBLOX 0x00455ff0
@@ -587,13 +641,13 @@ void CRobloxDoc::FUN_00458c80(CCmdUI* pCmdUI)
 	pCmdUI->Enable(FUN_00403290()->create<RBX::RunService>()->getRunState() == RBX::RS_RUNNING);
 }
 
-// FUNCTION: ROBLOX 0x00458dc0
+// STUB: ROBLOX 0x00458dc0
 void CRobloxDoc::FUN_00458dc0(CCmdUI* pCmdUI)
 {
 	RBX::DataModel::Lock lock(m_unk0x78->FUN_0046edc0());
-	RBX::RunState runState = FUN_00403290()->create<RBX::RunService>()->getRunState();
-	bool hasLocalPlayer = RBX::Network::Players::findLocalPlayer(FUN_00403290().get()) != NULL;
-	pCmdUI->Enable(runState != RBX::RS_NORMAL && !hasLocalPlayer);
+	RBX::RunService* runService = FUN_00403290()->create<RBX::RunService>();
+	// A local Player does not make this a remote, read-only simulation.
+	pCmdUI->Enable(runService->getRunState() != RBX::RS_NORMAL && !runService->runDisabled);
 }
 
 // FUNCTION: ROBLOX 0x00458f60
@@ -686,7 +740,7 @@ void CRobloxDoc::FUN_00459790(CCmdUI* pCmdUI)
 	}
 }
 
-// FUNCTION: ROBLOX 0x00459950
+// STUB: ROBLOX 0x00459950
 BOOL CRobloxDoc::FUN_00459950(std::string fileName)
 {
 	if (RBX::ContentProvider::isHttpUrl(fileName.c_str())) {
@@ -694,7 +748,27 @@ BOOL CRobloxDoc::FUN_00459950(std::string fileName)
 	}
 
 	CString script;
-	{
+	int port = 0, player = 0;
+	char extra;
+	if (sscanf(fileName.c_str(), "openrbx-test-server:%d%c", &port, &extra) == 1) {
+		if (port < 49152 || port > 65535) return FALSE;
+		script.Format("game:service('NetworkServer'):Start(%d,10)\n"
+			"game.Players.PlayerAdded:connect(function(p) while p.Parent do "
+			"local c=p.Character local h=c and c:findFirstChild('Humanoid') "
+			"if not c or not c.Parent or (h and h.Health<=0) then wait(3) "
+			"if p.Parent and p.Character==c then p:LoadCharacter() end end wait(.1) end end)\n"
+			"game:service('RunService'):Run()\n", port);
+	}
+	else if (sscanf(fileName.c_str(), "openrbx-test-client:%d:%d%c", &port, &player, &extra) == 2) {
+		if (port < 49152 || port > 65535 || player < 1 || player > 32) return FALSE;
+		script.Format("local client=game:service('NetworkClient')\n"
+			"local player=game.Players:CreateLocalPlayer(%d) player.Name='Player%d'\n"
+			"client.ConnectionAccepted:connect(function(peer,replicator) "
+			"local marker=replicator:SendMarker() marker.Received:wait() "
+			"replicator:RequestCharacter() game:service('RunService'):Run() end)\n"
+			"client:Connect('127.0.0.1',%d,0,10)\n", player, player, port);
+	}
+	else {
 		CFile file(fileName.c_str(), CFile::modeRead);
 		char buffer[0x1000];
 		UINT count;
@@ -767,6 +841,9 @@ void CRobloxDoc::FUN_0045a0b0(CCmdUI* pCmdUI)
 // STUB: ROBLOX 0x0045a1f0
 BOOL CRobloxDoc::SaveModified()
 {
+	if (isOnlinePlay()) {
+		return TRUE;
+	}
 	if (!m_unk0x78->FUN_0046edc0()) {
 		return TRUE;
 	}
@@ -809,33 +886,139 @@ void CRobloxDoc::FUN_0045a600()
 	createService<RBX::RunService>(FUN_00403290().get())->pause();
 }
 
-// FUNCTION: ROBLOX 0x0045a730
+// STUB: ROBLOX 0x0045a730
 void CRobloxDoc::FUN_0045a730()
 {
 	RBX::DataModel::Lock lock(m_unk0x78->FUN_0046edc0());
-	if (FUN_00403290()->create<RBX::RunService>()->getRunState() != RBX::RS_NORMAL) {
-		createService<RBX::RunService>(FUN_00403290().get())->reset();
-		FUN_00403290()->clearContents();
-		SerializerV2::load(m_unk0x60.get(), FUN_00403290().get());
-		FUN_00403290()->getWorkspace()->joinAllHack();
-		m_unk0x60.reset();
+	RBX::RunService* runService = createService<RBX::RunService>(FUN_00403290().get());
+	if (runService->getRunState() != RBX::RS_NORMAL && !runService->runDisabled) {
+		runService->reset();
+		// Script-started simulations may not have a toolbar Run snapshot.
+		if (m_unk0x60.get() != NULL) {
+			FUN_00403290()->clearContents();
+			SerializerV2::load(m_unk0x60.get(), FUN_00403290().get());
+			FUN_00403290()->getWorkspace()->joinAllHack();
+			m_unk0x60.reset();
+		}
+		FUN_00403290()->getWorkspace()->setDefaultMouseCommand();
 	}
 }
 
-// FUNCTION: ROBLOX 0x0045a9e0
+// STUB: ROBLOX 0x0045a9e0
 void CRobloxDoc::FUN_0045a9e0()
 {
 	RBX::DataModel::Lock lock(m_unk0x78->FUN_0046edc0());
 	if (FUN_00403290()->create<RBX::RunService>()->getRunState() == RBX::RS_NORMAL) {
+		RBX::Network::Player* player = RBX::Network::Players::findLocalPlayer(FUN_00403290().get());
+		ScopedRuntimeArchiveExclusion excludePlayer(player);
+		ScopedRuntimeArchiveExclusion excludeCharacter(player ? player->getCharacter() : NULL);
 		m_unk0x60.reset(SerializerV2::newRootElement());
 		FUN_00403290()->writeChildren(m_unk0x60.get());
+		// Freeze reference handles into archive IDs before simulation changes them.
+		std::ostringstream saved;
+		TextXmlWriter writer(saved);
+		writer.serialize(m_unk0x60.get());
+		std::istringstream input(saved.str());
+		TextXmlParser parser(input.rdbuf());
+		m_unk0x60 = parser.parse();
 	}
 
 	createService<RBX::RunService>(FUN_00403290().get())->run();
 }
 
+// Equivalent to player.txt, with one automatic respawn worker per local Player.
+static const char localTestScript[] =
+	"local players = game.Players\n"
+	"local player = players.LocalPlayer\n"
+	"if not player then players:CreateLocalPlayer(0); player = players.LocalPlayer end\n"
+	"player:LoadCharacter()\n"
+	"local name = '_OpenRBXLocalTestRespawn'\n"
+	"if player:findFirstChild(name) then return end\n"
+	"local marker = Instance.new('BoolValue')\n"
+	"marker.Name = name; marker.Value = true; marker.Parent = player\n"
+	"while player.Parent == players and marker.Parent == player do\n"
+	" local character = player.Character\n"
+	" local humanoid = character and character:findFirstChild('Humanoid')\n"
+	" if not humanoid or not character.Parent or humanoid.Health <= 0 then\n"
+	"  wait(3)\n"
+	"  if players.LocalPlayer == player and player.Character == character and marker.Parent == player then\n"
+	"   player:LoadCharacter()\n"
+	"  end\n"
+	" else wait(0.1) end\n"
+	"end\n";
+
+void CRobloxDoc::OnTestLocal()
+{
+	boost::shared_ptr<RBX::DataModel> dataModel = FUN_00403290();
+	if (!dataModel) {
+		return;
+	}
+	RBX::DataModel::Lock lock(dataModel);
+	if (dataModel->create<RBX::RunService>()->runDisabled) {
+		return;
+	}
+	try {
+		// Save the edit-state snapshot before creating any runtime objects.
+		FUN_0045a9e0();
+		dataModel->create<RBX::ScriptContext>()->executeInNewThread(
+			RBX::Security::CmdLine, localTestScript, "Solo Test"
+		);
+	}
+	catch (const std::exception& error) {
+		AfxMessageBox(error.what(), MB_OK | MB_ICONERROR);
+	}
+}
+
+void CRobloxDoc::OnUpdateTestLocal(CCmdUI* pCmdUI)
+{
+	boost::shared_ptr<RBX::DataModel> dataModel = FUN_00403290();
+	if (!dataModel) {
+		pCmdUI->Enable(FALSE);
+		return;
+	}
+	RBX::DataModel::Lock lock(dataModel);
+	pCmdUI->Enable(!dataModel->create<RBX::RunService>()->runDisabled);
+}
+
+void CRobloxDoc::OnRespawnLocalPlayer()
+{
+	boost::shared_ptr<RBX::DataModel> dataModel = FUN_00403290();
+	if (!dataModel) {
+		return;
+	}
+	RBX::DataModel::Lock lock(dataModel);
+	RBX::Network::Player* player = RBX::Network::Players::findLocalPlayer(dataModel.get());
+	if (!player || dataModel->create<RBX::RunService>()->runDisabled) {
+		return;
+	}
+	try {
+		player->loadCharacter();
+	}
+	catch (const std::exception& error) {
+		AfxMessageBox(error.what(), MB_OK | MB_ICONERROR);
+	}
+}
+
+void CRobloxDoc::OnUpdateRespawnLocalPlayer(CCmdUI* pCmdUI)
+{
+	boost::shared_ptr<RBX::DataModel> dataModel = FUN_00403290();
+	if (!dataModel) {
+		pCmdUI->Enable(FALSE);
+		return;
+	}
+	RBX::DataModel::Lock lock(dataModel);
+	pCmdUI->Enable(
+		!dataModel->create<RBX::RunService>()->runDisabled &&
+		RBX::Network::Players::findLocalPlayer(dataModel.get()) != NULL
+	);
+}
+
 // clang-format off
 BEGIN_MESSAGE_MAP(CRobloxDoc, CDocument)
+	ON_COMMAND(ID_TEST_LOCAL, OnTestLocal)
+	ON_UPDATE_COMMAND_UI(ID_TEST_LOCAL, OnUpdateTestLocal)
+	ON_COMMAND(ID_TEST_RESPAWN_LOCAL, OnRespawnLocalPlayer)
+	ON_UPDATE_COMMAND_UI(ID_TEST_RESPAWN_LOCAL, OnUpdateRespawnLocalPlayer)
 	ON_COMMAND(0x80b6, FUN_00454920)
 	ON_UPDATE_COMMAND_UI(0x80b6, FUN_00453eb0)
 	ON_COMMAND(0x80b7, FUN_004549c0)
@@ -851,7 +1034,7 @@ BEGIN_MESSAGE_MAP(CRobloxDoc, CDocument)
 	ON_COMMAND(0x8100, FUN_00454a60)
 	ON_UPDATE_COMMAND_UI(0x8100, FUN_0045a0b0)
 	ON_COMMAND(0x8104, FUN_00454e50)
-	ON_UPDATE_COMMAND_UI(0x8104, FUN_00453eb0)
+	ON_UPDATE_COMMAND_UI(0x8104, OnUpdateTestLocal)
 	ON_UPDATE_COMMAND_UI(0x8105, FUN_00453eb0)
 	ON_COMMAND(0x8105, FUN_00454f50)
 	ON_COMMAND(0x8106, FUN_004550b0)

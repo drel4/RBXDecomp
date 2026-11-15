@@ -167,8 +167,8 @@ bool BallBlockContact::computeIsColliding(
 	return false;
 }
 
-// FUNCTION: WEBSERVICE 0x100d25f0
-// FUNCTION: ROBLOX 0x0060a5a0
+// STUB: WEBSERVICE 0x100d25f0
+// STUB: ROBLOX 0x0060a5a0
 bool BallBlockContact::stepContact()
 {
 	int onBorder;
@@ -307,7 +307,8 @@ bool BlockBlockContact::getBestPlaneEdge(bool& planeContact, float overlapIgnore
 
 					if (p0p1inCrossAxis > 0) {
 						feature[0] = block(0)->getClosestEdge(c0.rotation, (NormalId) i, crossAxis) + 6;
-						feature[1] = block(1)->getClosestEdge(c1.rotation, (NormalId) j, -crossAxis) + 6;
+						Vector3 negCrossAxis = -crossAxis;
+						feature[1] = block(1)->getClosestEdge(c1.rotation, (NormalId) j, negCrossAxis) + 6;
 					}
 					else {
 						Vector3 negCrossAxis = -crossAxis;

@@ -60,6 +60,7 @@ public:
 	virtual BOOL InitInstance(); // vtable+0x58
 	virtual int Run();           // vtable+0x5c
 	virtual int ExitInstance();  // vtable+0x70
+	virtual BOOL OnIdle(LONG count);
 
 	// SYNTHETIC: ROBLOX 0x00451530
 	// CRobloxApp::`scalar deleting destructor'
@@ -72,6 +73,7 @@ public:
 	CDocument* FUN_0044fbc0();
 	void FUN_004509e0();
 	BOOL FUN_00451550(std::vector<std::string>::iterator begin, std::vector<std::string>::iterator end);
+	virtual BOOL PreTranslateMessage(MSG* message);
 
 	afx_msg void OnAppAbout();
 	afx_msg void FUN_0044dc90();

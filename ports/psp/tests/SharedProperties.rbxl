@@ -1,0 +1,8 @@
+<roblox version="4"><Item class="Workspace"><Properties><string name="Name">Workspace</string></Properties>
+<Item class="Part" referent="A"><Properties><string name="Name">Repeated</string><bool name="Anchored">false</bool><float name="TopParamA">-0.5</float><float name="TopParamB">0.5</float><token name="TopSurfaceInput">0</token></Properties></Item>
+<Item class="Part" referent="B"><Properties><string name="Name">Repeated</string><bool name="Anchored">false</bool><float name="TopParamA">-0.5</float><float name="TopParamB">0.5</float><token name="TopSurfaceInput">0</token></Properties></Item>
+<Item class="Script"><Properties><string name="Name">RepeatedSource</string><ProtectedString name="Source"><![CDATA[local x = 'keep < & literal'; wait(1)]]></ProtectedString></Properties></Item>
+<Item class="Script"><Properties><string name="Name">RepeatedSource</string><ProtectedString name="Source"><![CDATA[local x = 'keep < & literal'; wait(1)]]></ProtectedString></Properties></Item>
+<Item class="Weld"><Properties><string name="Name">Forward</string><Ref name="Part0">A</Ref><Ref name="Part1">B</Ref></Properties></Item>
+<Item class="Weld"><Properties><string name="Name">Reverse</string><Ref name="Part0">B</Ref><Ref name="Part1">A</Ref></Properties></Item>
+</Item></roblox>

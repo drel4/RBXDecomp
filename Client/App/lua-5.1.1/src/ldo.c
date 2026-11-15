@@ -118,9 +118,9 @@ public:
 		: L(other.L), errorJmp(other.errorJmp), committed(other.committed)
 	{ other.committed = true; }
 
-	// FUNCTION: WEBSERVICE 0x100b6270
-	// FUNCTION: ROBLOX 0x00602a60
-	virtual const char* what() const
+	// STUB: WEBSERVICE 0x100b6270
+	// STUB: ROBLOX 0x00602a60
+	virtual const char* what() const throw()
 	{ return lua_tostring(L, -1); }
 
 	// FUNCTION: WEBSERVICE 0x100b6290
@@ -588,5 +588,4 @@ int luaD_protectedparser (lua_State *L, ZIO *z, const char *name) {
   luaZ_freebuffer(L, &p.buff);
   return status;
 }
-
 

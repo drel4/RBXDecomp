@@ -1,0 +1,6 @@
+{% extends 'base.html' %}{% block body %}<h1>{{ _("Users") }}</h1>
+<table class="listing"><tr><th>{{ _("Nickname") }}</th><th>{{ _("Status") }}</th><th>{{ _("Registered") }}</th><th>{{ _("Actions") }}</th></tr>
+{% for user in users %}<tr><td>{{ user.nickname }}</td><td>{{ _('Banned' if user.banned else 'Active') }}</td><td>{{ user.created|utcdate }}</td><td>
+<a href="/manage/users/{{ user.id }}/edit">{{ _("Edit nickname / password") }}</a>
+<form class="inline" method="post" action="/manage/users/{{ user.id }}/{{ 'unban' if user.banned else 'ban' }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button>{{ _('Unban' if user.banned else 'Ban') }}</button></form>
+<a href="/manage/users/{{ user.id }}/delete">{{ _("Remove user") }}</a></td></tr>{% endfor %}</table>{% endblock %}

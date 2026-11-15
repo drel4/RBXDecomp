@@ -1,0 +1,3 @@
+{% extends 'base.html' %}{% block body %}<h1>{{ _("Admin sign-in") }}</h1>
+<form method="post"><input type="hidden" name="csrf" value="{{ session.csrf }}"><label for="password">{{ _("Password") }}</label>
+<input id="password" name="password" type="password" autocomplete="current-password"> <button type="submit">{{ _("Sign in") }}</button></form>{% endblock %}

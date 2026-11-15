@@ -2,6 +2,8 @@
 
 #include "appdraw/DrawAdorn.h"
 #include "humanoid/FallingDown.h"
+#include "humanoid/Freefall.h"
+#include "humanoid/Jumping.h"
 #include "humanoid/Running.h"
 #include "network/Players.h"
 #include "rbxgraphics/Adorn.h"
@@ -17,6 +19,7 @@
 #include "v8datamodel/Tool.h"
 #include "v8datamodel/Workspace.h"
 #include "v8kernel/Body.h"
+#include "v8kernel/Constants.h"
 #include "v8kernel/Kernel.h"
 #include "v8tree/Service.h"
 #include "v8world/Joint.h"
@@ -293,15 +296,19 @@ boost::shared_ptr<AutoJoint> newJoint(bool animated)
 	return s;
 }
 
-// FUNCTION: WEBSERVICE 0x100a1b00
-// FUNCTION: ROBLOX 0x005ea0d0
+// STUB: WEBSERVICE 0x100a1b00
+// STUB: ROBLOX 0x005ea0d0
 void Humanoid::render3dAdorn(Adorn* adorn)
 {
 	if (walkMode == CLICK_TO_MOVE) {
 		if (this == getLocalHumanoidFromContext(this)) {
 			if (Workspace::findWorkspace(this)) {
+				// Remote physics can stop at the destination without advancing
+				// this client's running controller. Never draw a reached target
+				// merely because the local movement mode is still stale.
+				getIntendedMovementVector(true);
 				G3D::Vector3 worldPosition;
-				if (hasWalkToPoint(worldPosition)) {
+				if (walkMode == CLICK_TO_MOVE && hasWalkToPoint(worldPosition)) {
 					renderWaypoint(adorn, worldPosition);
 				}
 			}
@@ -778,8 +785,8 @@ void Humanoid::getIgnorePrims(std::vector<const Primitive*>& ignore)
 	}
 }
 
-// FUNCTION: WEBSERVICE 0x100a4d50
-// FUNCTION: ROBLOX 0x005ed3f0
+// STUB: WEBSERVICE 0x100a4d50
+// STUB: ROBLOX 0x005ed3f0
 void Humanoid::setHealth(float value)
 {
 	float newHealth = G3D::clamp(value, 0.0f, maxHealth);
@@ -847,8 +854,8 @@ void Humanoid::setWalkRotationalVelocity(const float& value)
 	}
 }
 
-// FUNCTION: WEBSERVICE 0x100a5030
-// FUNCTION: ROBLOX 0x005ed6d0
+// STUB: WEBSERVICE 0x100a5030
+// STUB: ROBLOX 0x005ed6d0
 void Humanoid::setWalkToPoint(const G3D::Vector3& value)
 {
 	if (walkToPoint != value) {
@@ -857,11 +864,11 @@ void Humanoid::setWalkToPoint(const G3D::Vector3& value)
 	}
 
 	walkMode = walkMode == HAS_PART ? CLICK_TO_MOVE : HAS_POINT;
-	walkTimer = walkMode == CLICK_TO_MOVE ? 240 : 0;
+	walkTimer = walkMode == CLICK_TO_MOVE ? G3D::iRound(8.0f / Constants::uiDt()) : 0;
 }
 
-// FUNCTION: WEBSERVICE 0x100a50c0
-// FUNCTION: ROBLOX 0x005ed760
+// STUB: WEBSERVICE 0x100a50c0
+// STUB: ROBLOX 0x005ed760
 void Humanoid::setWalkToPart(PartInstance* value)
 {
 	if (walkToPart.get() != value) {
@@ -870,7 +877,7 @@ void Humanoid::setWalkToPart(PartInstance* value)
 	}
 
 	walkMode = walkMode == HAS_POINT ? CLICK_TO_MOVE : HAS_PART;
-	walkTimer = walkMode == CLICK_TO_MOVE ? 240 : 0;
+	walkTimer = walkMode == CLICK_TO_MOVE ? G3D::iRound(8.0f / Constants::uiDt()) : 0;
 }
 
 // FUNCTION: WEBSERVICE 0x100a51b0
@@ -976,10 +983,17 @@ void Humanoid::checkForJointDeath()
 	}
 }
 
-// FUNCTION: WEBSERVICE 0x100a56c0
-// FUNCTION: ROBLOX 0x005edd60
+// STUB: WEBSERVICE 0x100a56c0
+// STUB: ROBLOX 0x005edd60
 void Humanoid::onEvent(const RunService* source, Stepped event)
 {
+	// The server advances the running controller in multiplayer. WalkMode is
+	// local state, however, so the owning client must also finish its waypoint
+	// when replicated movement reaches it (including clearing the green marker).
+	if (walkMode == CLICK_TO_MOVE && this == getLocalHumanoidFromContext(this)) {
+		updateWalkDirection();
+	}
+
 	if (State* state = currentState.get()) {
 		if (getParent()) {
 			setState(state->onStep(event.step, *static_cast<PVInstance*>(getParent())->getTopPVController()));

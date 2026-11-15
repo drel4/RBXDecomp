@@ -1,4 +1,5 @@
 #include "Roblox.h"
+#include "util/AssetProxy.h"
 
 #include "AboutRobloxDialog.h"
 #include "App.h"
@@ -15,6 +16,7 @@
 #include "RobloxDoc.h"
 #include "RobloxReportView.h"
 #include "RobloxView.h"
+#include "RobloxWnd.h"
 #include "ScriptDoc.h"
 #include "VersionInfo.h"
 #include "network/API.h"
@@ -42,6 +44,8 @@
 class CRobloxModule : public ATL::CAtlMfcModule
 {
 public:
+	DECLARE_LIBID(LIBID_RobloxLib)
+	CRobloxModule() { InitLibId(); }
 	DECLARE_REGISTRY_APPID_RESOURCEID(103, "{A40F941A-3670-40DA-85B9-39A7F53511B9}");
 };
 
@@ -666,36 +670,18 @@ static void FUN_00450e30()
 	}
 }
 
-// FUNCTION: ROBLOX 0x004510b0
+// STUB: ROBLOX 0x004510b0
 void CRobloxApp::FUN_004510b0(CCmdUI* p_unk0x04)
 {
-	switch (RBX::DebugSettings::singleton().getErrorReporting()) {
-	case RBX::DebugSettings::Prompt:
-		if (CApp::FUN_00407300()) {
-			p_unk0x04->Enable(TRUE);
-		}
-		break;
-	case RBX::DebugSettings::Report:
-		p_unk0x04->Enable(TRUE);
-		break;
-	}
+	// The instance has no legacy crash-report website or upload endpoint.
+	p_unk0x04->Enable(FALSE);
 }
 
-// FUNCTION: ROBLOX 0x00451100
+// STUB: ROBLOX 0x00451100
 void CRobloxApp::FUN_00451100()
 {
-	if (CApp::FUN_00407300()) {
-		switch (RBX::DebugSettings::singleton().getErrorReporting()) {
-		case RBX::DebugSettings::Prompt: {
-			CRobloxDHtmlDialog dialog(124, FUN_00407190() + "/Error/ReportDialog.aspx", NULL);
-			dialog.DoModal();
-			break;
-		}
-		case RBX::DebugSettings::Report:
-			CApp::FUN_00407a40(FUN_00407190() + "/Error/Dmp.ashx");
-			break;
-		}
-	}
+	// Startup can invoke this command when old dumps exist. Keep those local
+	// diagnostics, but do not open the missing report page or upload them.
 }
 
 // FUNCTION: ROBLOX 0x00451550
@@ -787,6 +773,7 @@ BOOL CRobloxApp::InitInstance()
 
 		CRobloxCommandLineInfo cmdInfo;
 		ParseCommandLine(cmdInfo);
+		CString launchBaseUrl = g_unk0x00954290;
 
 		if (cmdInfo.m_nShellCommand == CCommandLineInfo::AppUnregister) {
 			_AtlModule.UpdateRegistryAppId(FALSE);
@@ -805,6 +792,10 @@ BOOL CRobloxApp::InitInstance()
 			AfxEnableControlContainer();
 
 			FUN_004509e0();
+			RBX::AssetProxy::setEnabled(GetProfileInt("Settings", "AssetProxy", 0) != 0);
+			// Launch the private instance directly without requiring a wrapper.
+			// Explicit -BaseUrl wins over legacy AppSettings/registry values.
+			g_unk0x00954290 = launchBaseUrl.IsEmpty() ? "http://blox.ralsei.tech" : launchBaseUrl;
 			FUN_00450e30();
 
 			if (CRenderSettings::singleton().FUN_0044d430() == CRenderSettings::c_graphicsModeUnk0x5) {
@@ -821,10 +812,10 @@ BOOL CRobloxApp::InitInstance()
 				return TRUE;
 			}
 
-			if (cmdInfo.m_unk0x26) {
-				m_pDocManager = new CBrowserDocManager();
-			}
-			else {
+			// Browser launches also need the play-document templates. The old
+			// standalone browser manager has no game template, so CreateGame
+			// interpreted unrelated memory as a template and crashed.
+			{
 				m_pDocManager = new CIDEDocManager(cmdInfo.m_unk0x27);
 				if (!FUN_0044dac0(false)) {
 					return FALSE;
@@ -1128,3 +1119,40 @@ CRobloxApp theApp;
 
 template const RBX::FactoryProduct<RBX::GameSettings, RBX::GlobalSettings::Item, RBX::sGameSettings>::Creator
 	RBX::FactoryProduct<RBX::GameSettings, RBX::GlobalSettings::Item, RBX::sGameSettings>::creator;
+
+static BOOL CALLBACK suspendViewportForEditorClick(HWND window, LPARAM parameter)
+{
+	CRobloxWnd* view = DYNAMIC_DOWNCAST(CRobloxWnd, CWnd::FromHandlePermanent(window));
+	HWND target = reinterpret_cast<HWND>(parameter);
+	if (view && window != target && !::IsChild(window, target)) view->suspendGameInput();
+	return TRUE;
+}
+
+BOOL CRobloxApp::PreTranslateMessage(MSG* message)
+{
+	if (m_pMainWnd && (message->message == WM_LBUTTONDOWN || message->message == WM_RBUTTONDOWN ||
+		message->message == WM_MBUTTONDOWN || message->message == WM_NCLBUTTONDOWN)) {
+		EnumChildWindows(m_pMainWnd->m_hWnd, suspendViewportForEditorClick,
+			reinterpret_cast<LPARAM>(message->hwnd));
+	}
+	return CWinApp::PreTranslateMessage(message);
+}
+
+static BOOL CALLBACK renderIdleWindow(HWND window, LPARAM parameter)
+{
+	CRobloxWnd* view = DYNAMIC_DOWNCAST(CRobloxWnd, CWnd::FromHandlePermanent(window));
+	if (view != NULL && view->renderIdleFrame()) {
+		*reinterpret_cast<BOOL*>(parameter) = TRUE;
+	}
+	return TRUE;
+}
+
+BOOL CRobloxApp::OnIdle(LONG count)
+{
+	BOOL moreIdle = CWinApp::OnIdle(count);
+	BOOL rendered = FALSE;
+	if (m_pMainWnd != NULL && ::IsWindow(m_pMainWnd->m_hWnd)) {
+		EnumChildWindows(m_pMainWnd->m_hWnd, renderIdleWindow, reinterpret_cast<LPARAM>(&rendered));
+	}
+	return rendered || moreIdle;
+}

@@ -88,12 +88,18 @@ public:
 	virtual BOOL OnSaveDocument(LPCTSTR lpszPathName);
 	virtual void OnCloseDocument();
 	virtual BOOL SaveModified();
+	void setOnlinePlay();
+	bool isOnlinePlay() const;
 	virtual BOOL DoSave(LPCTSTR lpszPathName, BOOL bReplace = TRUE);
 	BOOL FUN_00459950(std::string p_unk0x04);
 	void FUN_00459c80();
 	void FUN_00459da0();
 
 protected:
+	afx_msg void OnTestLocal();
+	afx_msg void OnUpdateTestLocal(CCmdUI* pCmdUI);
+	afx_msg void OnRespawnLocalPlayer();
+	afx_msg void OnUpdateRespawnLocalPlayer(CCmdUI* pCmdUI);
 	afx_msg void FUN_00453eb0(CCmdUI* pCmdUI);
 	afx_msg void FUN_00454430();
 	afx_msg void FUN_00454920();
@@ -124,6 +130,7 @@ protected:
 	afx_msg void FUN_0045a9e0();
 
 	static CString FUN_00454b50(CRobloxDoc* doc, const char* name);
+	void launchLocalNetworkTest(int players);
 
 	DECLARE_MESSAGE_MAP()
 

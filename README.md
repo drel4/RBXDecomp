@@ -1,5 +1,13 @@
 # RBXDecomp
 
+This fork contains mostly patches and fixes, including patches for notblox (small 2007 roblox instance, initially made as an experiment)
+
+This is a modification of [RBXDecomp](https://github.com/OpenRBX-org/RBXDecomp), not a byte-matching continuation of its reconstruction work. It includes regular-client fixes, native Linux game-server support, the notblox website and account services, and an experimental PSP port. See [the instance service documentation](services/grid/README.md), [the Linux server build](services/grid/linux/README.md), and [the PSP port status](ports/psp/README.md).
+
+The original project's documentation follows below. Progress figures and binary-matching claims refer to upstream, not these modified builds.
+
+See [validation results and known reconstruction-check differences](VALIDATION.md) for this patch branch.
+
 [Discord](https://discord.gg/2JcBQFxVPv) | [Contributing](/CONTRIBUTING.md)
 
 This is a decompilation of Roblox as it was released in December 2007. We're writing the source back until Visual C++ compiles it into the same binaries, instruction for instruction, and the end goal is a codebase we can build on.

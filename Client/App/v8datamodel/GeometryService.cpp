@@ -43,9 +43,9 @@ void GeometryService::onServiceProvider(const ServiceProvider* oldProvider, cons
 	}
 }
 
-// FUNCTION: WEBSERVICE 0x100e9e10
-// FUNCTION: ROBLOX 0x00628fa0
-inline GeometryService::GeometryService()
+// STUB: WEBSERVICE 0x100e9e10
+// STUB: ROBLOX 0x00628fa0
+GeometryService::GeometryService()
 	: DescribedCreatable<GeometryService, Instance, sGeometryService>(sGeometryService), workspace(NULL)
 {
 }

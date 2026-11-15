@@ -1,0 +1,9 @@
+FROM debian:trixie-slim
+ARG NATIVE_ARCH=i386
+RUN dpkg --add-architecture i386 && apt-get update && apt-get install -y --no-install-recommends \
+    clang cmake ninja-build g++-multilib pkg-config \
+    libcurl4-openssl-dev:${NATIVE_ARCH} libssl-dev:${NATIVE_ARCH} zlib1g-dev:${NATIVE_ARCH} \
+    libsdl1.2-compat-dev:${NATIVE_ARCH} libgl-dev:${NATIVE_ARCH} libglu1-mesa-dev:${NATIVE_ARCH} && \
+    rm -rf /var/lib/apt/lists/*
+WORKDIR /src
+ENV CC=clang CXX=clang++

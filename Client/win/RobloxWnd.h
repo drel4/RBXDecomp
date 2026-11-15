@@ -67,6 +67,8 @@ public:
 
 	virtual void InvalidateRunView();
 	virtual void AdjustThrottle(double frameRate);
+	BOOL renderIdleFrame();
+	void suspendGameInput();
 
 	virtual std::string getMetric(const std::string& metric) const;
 

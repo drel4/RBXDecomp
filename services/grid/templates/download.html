@@ -1,0 +1,25 @@
+{% extends 'base.html' %}{% block title %}{{ _("Download client - notblox") }}{% endblock %}{% block body %}
+<h1>{{ _("Download client") }}</h1>
+<p>{{ _("To play on notblox, patch the original Windows client using the files below.") }}</p>
+<h2>{{ _("Files and patcher") }}</h2>
+<ul>
+<li><a href="https://archive.org/download/ROBLOX20072013/December%2029%202007%20%280.3.676.0%29.zip">{{ _("Original client: December 29, 2007 (0.3.676.0)") }}</a> {{ _("— ZIP archive from Internet Archive.") }}</li>
+<li><a href="/downloads/notblox.xdelta">{{ _("Download notblox.xdelta") }}</a> {{ _("— the patch for this instance.") }}</li>
+<li><a href="https://kotcrab.github.io/xdelta-wasm/">{{ _("Open the online xdelta patcher") }}</a> {{ _("— use a modern browser such as Firefox, Chrome or Edge, not the client's built-in browser.") }}</li>
+</ul>
+<h2>{{ _("How to patch") }}</h2>
+<ol>
+<li>{{ _("Download the original client ZIP and extract the whole archive into a folder. Keep its other files and folders; you will need them to run the client.") }}</li>
+<li>{{ _("Download") }} <b>notblox.xdelta</b> {{ _("using the link above.") }}</li>
+<li>{{ _("Open the online patcher. Under") }} <b>{{ _("Source file") }}</b>{{ _(", select the original, unmodified") }} <b>Roblox.exe</b> {{ _("from the extracted archive. Do not select the ZIP itself.") }}</li>
+<li>{{ _("Under") }} <b>{{ _("Patch file") }}</b>{{ _(", select") }} <b>notblox.xdelta</b>{{ _(", then click") }} <b>{{ _("Apply Patch") }}</b>{{ _(". Leave checksum verification enabled.") }}</li>
+<li>{{ _("Save the resulting") }} <b>Roblox-patched.exe</b>{{ _(". Back up the original") }} <b>Roblox.exe</b>{{ _(", rename the patched file to") }} <b>Roblox.exe</b>{{ _(", and put it in the original client's folder, replacing the original executable.") }}</li>
+<li>{{ _("Run the patched") }} <b>Roblox.exe</b>{{ _(". It opens this instance's website. Log in or create an account, choose a place, and press") }} <b>{{ _("Play") }}</b>.</li>
+</ol>
+<h2>{{ _("If patching fails") }}</h2>
+<p>{{ _("Extract a fresh copy of the exact original version linked above and try again. The patch needs the original executable, not an already patched client or a different version. Keep the patched executable beside the original client's other files, rather than running it from the browser's downloads folder.") }}</p>
+<h2>{{ _("Source code") }}</h2>
+<p>{{ _("Based on RBXDecomp. Source repository:") }} <a href="https://github.com/OpenRBX-org/RBXDecomp">RBXDecomp</a>.</p>
+<p>{{ _("RBXDecomp is licensed under") }} <a href="https://github.com/OpenRBX-org/RBXDecomp/blob/main/LICENSE">GPL-3.0</a>.</p>
+<p><a href="/">{{ _("Back to places") }}</a></p>
+{% endblock %}

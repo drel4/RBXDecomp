@@ -1,0 +1,13 @@
+<roblox version="4"><Item class="Workspace"><Properties><string name="Name">Workspace</string></Properties>
+<Item class="Part"><Properties><string name="Name">Floor</string><bool name="Anchored">true</bool><int name="BrickColor">28</int><Vector3 name="size"><X>60</X><Y>2</Y><Z>60</Z></Vector3><CoordinateFrame name="CFrame"><X>0</X><Y>-1</Y><Z>0</Z></CoordinateFrame></Properties></Item>
+<Item class="Part"><Properties><string name="Name">FallingBlock</string><bool name="Anchored">false</bool><int name="BrickColor">21</int><Vector3 name="size"><X>4</X><Y>4</Y><Z>4</Z></Vector3><CoordinateFrame name="CFrame"><X>-8</X><Y>28</Y><Z>0</Z></CoordinateFrame></Properties></Item>
+<Item class="Part"><Properties><string name="Name">FallingBall</string><bool name="Anchored">false</bool><int name="BrickColor">24</int><token name="shape">0</token><Vector3 name="size"><X>5</X><Y>5</Y><Z>5</Z></Vector3><CoordinateFrame name="CFrame"><X>8</X><Y>22</Y><Z>0</Z></CoordinateFrame></Properties></Item>
+<Item class="Part"><Properties><string name="Name">TouchTrigger</string><bool name="Anchored">true</bool><bool name="CanCollide">false</bool><float name="Transparency">0.75</float><int name="BrickColor">23</int><Vector3 name="size"><X>30</X><Y>1</Y><Z>20</Z></Vector3><CoordinateFrame name="CFrame"><X>0</X><Y>12</Y><Z>0</Z></CoordinateFrame></Properties>
+<Item class="Script"><Properties><string name="Name">PhysicsContactValidation</string><ProtectedString name="Source"><![CDATA[
+-- Integration fixture, not the full gameplay acceptance map.
+script.Parent.Touched:connect(function(hit)
+    hit.BrickColor=37
+    print('Physics Touched: '..hit.Name)
+end)
+]]></ProtectedString></Properties></Item></Item>
+</Item></roblox>

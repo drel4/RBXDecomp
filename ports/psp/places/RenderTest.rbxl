@@ -1,0 +1,10 @@
+<roblox version="4">
+ <Item class="Workspace"><Properties><string name="Name">Workspace</string></Properties>
+  <Item class="Part"><Properties><bool name="Anchored">true</bool><int name="BrickColor">28</int><Vector3 name="size"><X>100</X><Y>2</Y><Z>100</Z></Vector3><CoordinateFrame name="CFrame"><X>0</X><Y>-2</Y><Z>0</Z></CoordinateFrame></Properties></Item>
+  <Item class="Part"><Properties><bool name="Anchored">true</bool><int name="BrickColor">21</int><Vector3 name="size"><X>8</X><Y>8</Y><Z>8</Z></Vector3><CoordinateFrame name="CFrame"><X>-12</X><Y>3</Y><Z>0</Z></CoordinateFrame></Properties></Item>
+  <Item class="Part"><Properties><bool name="Anchored">true</bool><int name="BrickColor">23</int><token name="shape">0</token><Vector3 name="size"><X>8</X><Y>8</Y><Z>8</Z></Vector3><CoordinateFrame name="CFrame"><X>0</X><Y>3</Y><Z>0</Z></CoordinateFrame></Properties></Item>
+  <Item class="Part"><Properties><bool name="Anchored">true</bool><int name="BrickColor">24</int><token name="shape">2</token><Vector3 name="size"><X>10</X><Y>6</Y><Z>6</Z></Vector3><CoordinateFrame name="CFrame"><X>12</X><Y>3</Y><Z>0</Z></CoordinateFrame></Properties></Item>
+  <Item class="WedgePart"><Properties><bool name="Anchored">true</bool><int name="BrickColor">37</int><Vector3 name="size"><X>10</X><Y>7</Y><Z>8</Z></Vector3><CoordinateFrame name="CFrame"><X>0</X><Y>2.5</Y><Z>14</Z><R00>0.7071068</R00><R01>0</R01><R02>0.7071068</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>-0.7071068</R20><R21>0</R21><R22>0.7071068</R22></CoordinateFrame></Properties></Item>
+ </Item>
+ <Item class="StarterPack"><Item class="Part"><Properties><bool name="Anchored">true</bool><string name="Name">MustNotRender</string></Properties></Item></Item>
+</roblox>

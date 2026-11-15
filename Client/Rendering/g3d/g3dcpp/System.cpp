@@ -1014,7 +1014,16 @@ void initTime() {
 
 RealTime System::getTick() { 
     init();
-    #ifdef G3D_WIN32
+    #ifdef OPENRBX_NATIVE_SERVER
+        static const RealTime origin = []() {
+            struct timespec start;
+            clock_gettime(CLOCK_MONOTONIC, &start);
+            return start.tv_sec + start.tv_nsec / 1e9;
+        }();
+        struct timespec now;
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        return now.tv_sec + now.tv_nsec / 1e9 - origin;
+    #elif defined(G3D_WIN32)
         LARGE_INTEGER now;
         QueryPerformanceCounter(&now);
 
@@ -1541,12 +1550,11 @@ void* System::alignedMalloc(size_t bytes, size_t alignment) {
     size_t  alignedPtr = truePtr + sizeof(void*);
 
     // 2^n - 1 has the form 1111... in binary.
-    uint32 bitMask = (alignment - 1);
+    size_t bitMask = (alignment - 1);
 
-    // Advance forward until we reach an aligned location.
-    while ((alignedPtr & bitMask) != 0) {
-        alignedPtr += sizeof(void*);
-    }
+    // The legacy pool may return a 4-byte-offset address on LP64. Stepping
+    // by an 8-byte pointer would never reach alignment; round up directly.
+    alignedPtr = (alignedPtr + bitMask) & ~bitMask;
 
     debugAssert(alignedPtr - truePtr + bytes <= totalBytes);
 

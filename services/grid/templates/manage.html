@@ -1,0 +1,25 @@
+{% extends 'base.html' %}{% block body %}<h1>{{ _("Manage places") }}</h1>
+<h2>{{ _("Server build") }}</h2>
+<form class="panel" method="post" action="/manage/server-build"><input type="hidden" name="csrf" value="{{ session.csrf }}">
+<label for="backend">{{ _("Build for new servers") }}</label><select id="backend" name="backend">{% for b in builds %}<option value="{{ b.id }}"{% if selected_build==b.id %} selected{% endif %}{% if not b.available %} disabled{% endif %}>{{ _(b.label) }}{% if not b.available %} {{ _("(not installed)") }}{% endif %}</option>{% endfor %}</select> <button>{{ _("Use selected build") }}</button>
+<p>{{ _("Running games are not changed. Restart a server below to apply the selected build and latest place file; connected players will be disconnected and must rejoin. Thumbnails always use the existing Wine generator.") }}</p></form>
+<p>{{ _("Upload an RBXL file, wait for its thumbnail, then publish.") }}</p>
+<form class="panel upload" method="post" enctype="multipart/form-data"><input type="hidden" name="csrf" value="{{ session.csrf }}">
+<label for="title">{{ _("Place title") }}</label><input id="title" name="title" maxlength="80">
+<label for="description">{{ _("Description") }}</label><textarea id="description" name="description" rows="3" cols="60" maxlength="2000"></textarea>
+<label for="asset_proxy">{{ _('Asset proxy policy') }}</label><select id="asset_proxy" name="asset_proxy"><option value="enabled">{{ _('Enabled') }}</option><option value="user-choice" selected>{{ _('User choice') }}</option><option value="disabled">{{ _('Disabled') }}</option></select>
+<label for="place">{{ _("Legacy place file (.rbxl / .rbxlx, up to 32 MB)") }}</label><input id="place" name="place" type="file">
+<p><button class="button" type="submit">{{ _("Add place & make thumbnail") }}</button></p></form>
+<h2>{{ _("Places") }}</h2>
+<table class="listing"><tr><th>{{ _("Place") }}</th><th>{{ _("Thumbnail") }}</th><th>{{ _("Status") }}</th><th>{{ _("Server settings") }}</th><th>{{ _("Actions") }}</th></tr>
+{% for p in places %}<tr><td><b>{{ p.title }}</b><br><a href="/manage/{{ p.id }}/edit">{{ _("Edit details / update file") }}</a></td><td>{{ _(p.thumb) }}</td><td>{{ _('Published' if p.published else 'Draft') }}</td>
+<td><form method="post" action="/manage/{{ p.id }}/limit"><input type="hidden" name="csrf" value="{{ session.csrf }}"><label>{{ _("Player limit for new servers") }} <input name="player_limit" value="{{ p.player_limit }}" size="3" maxlength="2"></label> <button>{{ _("Save") }}</button></form>
+<form method="post" action="/manage/{{ p.id }}/start"><input type="hidden" name="csrf" value="{{ session.csrf }}"><label>{{ _("Number of servers") }} <input name="count" value="1" size="3" maxlength="2"></label> <button>{{ _("Start servers") }}</button></form></td>
+<td>{% for action,label in [('unpublish' if p.published else 'publish','Unpublish' if p.published else 'Publish'),('thumbnail','New thumbnail'),('stop','Stop all servers')] %}
+<form class="inline" method="post" action="/manage/{{ p.id }}/{{ action }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button type="submit">{{ _(label) }}</button></form>{% endfor %} <a href="/manage/{{ p.id }}/delete">{{ _("Delete place") }}</a></td></tr>{% endfor %}</table>
+<h2>{{ _("Servers") }}</h2><p>{{ _("Empty servers stop after 15 seconds, or 1 minute if someone has played.") }} <a href="/manage">{{ _("Refresh status") }}</a></p>
+{% if servers %}<table class="listing"><tr><th>{{ _("Server") }}</th><th>{{ _("Place") }}</th><th>{{ _("Players") }}</th><th>{{ _("Status") }}</th><th>{{ _("Build") }}</th><th></th></tr>
+{% for s in servers %}<tr><td>#{{ s.id }}</td><td>{% for p in places %}{% if p.id==s.place_id %}{{ p.title }}{% endif %}{% endfor %}</td><td>{{ s.players }}/{{ s.limit }}</td><td>{{ _(s.state) }}</td><td>{{ _(s.backend) }}</td>
+<td><form method="post" action="/manage/servers/{{ s.id }}/stop"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button>{{ _("Stop server") }}</button></form>
+<form method="post" action="/manage/servers/{{ s.id }}/restart"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button>{{ _("Restart on selected build") }}</button></form></td></tr>{% endfor %}</table>{% else %}<p>{{ _("No running servers.") }}</p>{% endif %}
+<form method="post" action="/logout"><input type="hidden" name="csrf" value="{{ session.csrf }}"><p><button type="submit">{{ _("Sign out") }}</button></p></form>{% endblock %}

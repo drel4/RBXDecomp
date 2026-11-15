@@ -5,7 +5,8 @@ cmake_policy(SET CMP0091 NEW)
 project(openrbx C CXX)
 
 if (NOT WIN32)
-  message(FATAL_ERROR "Windows is the only supported platform (for now...)")
+  include("${CMAKE_CURRENT_LIST_DIR}/services/grid/linux/CMakeLists.txt")
+  return()
 endif()
 
 include(CheckCXXSourceCompiles)
@@ -732,6 +733,7 @@ set(OPENRBX_APP_CLIENT_SOURCES
   Client/App/util/IndexBox.cpp
 )
 
+
 if (MSVC_FOR_DECOMP)
   list(APPEND OPENRBX_APP_CLIENT_SOURCES Client/boost_1_34_1/libs/iostreams/src/zlib.cpp)
 endif()
@@ -930,6 +932,23 @@ set_property(TARGET webservice PROPERTY PREFIX "")
 set_property(TARGET webservice PROPERTY SUFFIX ".dll")
 
 add_custom_target(rbxgs DEPENDS webservice)
+
+# Optional headless host using the same engine and original WebService thumbnail
+# implementation. Keep this separate from the reconstruction DLL's ABI.
+option(OPENRBX_GRID_WORKER "Build the native multiplayer/thumbnail worker" OFF)
+if (OPENRBX_GRID_WORKER AND MSVC_FOR_DECOMP)
+  add_executable(grid-worker services/grid/worker.cpp WebService/ThumbnailGenerator.cpp)
+  target_compile_definitions(grid-worker PRIVATE ${OPENRBX_COMMON_DEFINITIONS} _CRT_SECURE_NO_WARNINGS _ATL_NO_COM_SUPPORT)
+  target_include_directories(grid-worker PRIVATE "${PROJECT_SOURCE_DIR}/WebService"
+    "${PROJECT_SOURCE_DIR}/Client/Network"
+    ${OPENRBX_ENGINE_INCLUDE_DIRS} ${OPENRBX_3RDPARTY_INCLUDE_DIRS} "${OPENRBX_MESA_INCLUDE_DIR}")
+  target_link_libraries(grid-worker PRIVATE ${OPENRBX_ENGINE_LIBRARIES} ${OPENRBX_G3D_LIBS}
+    ${OPENRBX_BOOST_LIBS} ${OPENRBX_MESA_LIBS} fmodex advapi32 dbghelp gdi32 ole32
+    oleaut32 setupapi shell32 shlwapi user32 version wininet winmm ws2_32)
+  foreach(lib zlib.lib G3D.lib G3D-debug.lib GLG3D.lib GLG3D-debug.lib sdl.lib sdlmain.lib glut32.lib)
+    target_link_options(grid-worker PRIVATE "/NODEFAULTLIB:${lib}")
+  endforeach()
+endif()
 
 if (MSVC_FOR_DECOMP)
   set(OPENRBX_ROBLOX_MIDL_DIR "${CMAKE_CURRENT_BINARY_DIR}/roblox_midl")

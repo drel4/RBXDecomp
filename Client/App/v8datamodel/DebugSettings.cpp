@@ -9,7 +9,9 @@
 
 #include <G3D/RegistryUtil.h>
 #include <G3D/format.h>
+#ifndef OPENRBX_NATIVE_SERVER
 #include <setupapi.h>
+#endif
 #include <windows.h>
 
 namespace RBX {
@@ -156,10 +158,13 @@ int DebugSettings::cpuSpeed() const
 	return Render::SpecData().CPUSpeed;
 }
 
-// FUNCTION: WEBSERVICE 0x100b2e90
-// FUNCTION: ROBLOX 0x0057ac70
+// STUB: WEBSERVICE 0x100b2e90
+// STUB: ROBLOX 0x0057ac70
 std::string DebugSettings::osVer() const
 {
+#ifdef OPENRBX_NATIVE_SERVER
+	return std::string("Linux");
+#else
 	OSVERSIONINFO osvi = {0};
 
 	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
@@ -167,21 +172,26 @@ std::string DebugSettings::osVer() const
 	return G3D::format(
 		"%d.%d.%d.%d", osvi.dwOSVersionInfoSize, osvi.dwMajorVersion, osvi.dwMinorVersion, osvi.dwBuildNumber
 	);
+#endif
 }
 
-// FUNCTION: WEBSERVICE 0x100b2f00
-// FUNCTION: ROBLOX 0x0057ace0
+// STUB: WEBSERVICE 0x100b2f00
+// STUB: ROBLOX 0x0057ace0
 int DebugSettings::osPlatformId() const
 {
+#ifdef OPENRBX_NATIVE_SERVER
+	return 0;
+#else
 	OSVERSIONINFO osvi = {0};
 
 	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
 	GetVersionEx(&osvi);
 	return osvi.dwPlatformId;
+#endif
 }
 
-// FUNCTION: WEBSERVICE 0x100b2f40
-// FUNCTION: ROBLOX 0x0057ad20
+// STUB: WEBSERVICE 0x100b2f40
+// STUB: ROBLOX 0x0057ad20
 std::string DebugSettings::glVendor() const
 {
 	return Render::SpecData().glVendor;
@@ -191,6 +201,9 @@ std::string DebugSettings::glVendor() const
 // STUB: ROBLOX 0x0057ada0
 std::string DebugSettings::gfxcard() const
 {
+#ifdef OPENRBX_NATIVE_SERVER
+	return std::string("headless");
+#else
 	DISPLAY_DEVICE displayDevice;
 	memset(&displayDevice, 0, sizeof(displayDevice));
 	displayDevice.cb = sizeof(displayDevice);
@@ -259,6 +272,7 @@ std::string DebugSettings::gfxcard() const
 	);
 
 	return std::string(displayDevice.DeviceString) + " drv=" + driverVersion;
+#endif
 }
 
 // FUNCTION: WEBSERVICE 0x100b33d0

@@ -326,7 +326,7 @@ inline unsigned int hashCode(const G3D::TextureFormat* f) {
 #       pragma warning (disable : 4311)
 #   endif	
     
-    return reinterpret_cast<unsigned int>(f);
+    return static_cast<unsigned int>(reinterpret_cast<size_t>(f));
 
 #   if defined(G3D_WIN32)
 #       pragma warning (pop)

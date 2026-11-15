@@ -194,7 +194,21 @@ void timed_mutex::do_unlock(cv_state&)
 mutex::mutex()
 {
     int res = 0;
+#ifdef OPENRBX_NATIVE_SERVER
+    // The original engine relies on Boost 1.34's Win32 CRITICAL_SECTION
+    // recursion (e.g. Name::getNullName -> Name::declare). Match that contract
+    // with a real pthread mutex rather than deadlocking on a default mutex.
+    pthread_mutexattr_t attributes;
+    res = pthread_mutexattr_init(&attributes);
+    if (res != 0)
+        throw thread_resource_error();
+    res = pthread_mutexattr_settype(&attributes, PTHREAD_MUTEX_RECURSIVE);
+    if (res == 0)
+        res = pthread_mutex_init(&m_mutex, &attributes);
+    pthread_mutexattr_destroy(&attributes);
+#else
     res = pthread_mutex_init(&m_mutex, 0);
+#endif
     if (res != 0)
         throw thread_resource_error();
 }

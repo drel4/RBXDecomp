@@ -2,6 +2,9 @@
 
 #include "humanoid/Running.h"
 #include "util/Name.h"
+#include "v8datamodel/PartInstance.h"
+#include "v8kernel/Body.h"
+#include "v8world/Primitive.h"
 
 namespace RBX {
 

@@ -1,0 +1,20 @@
+{% extends 'base.html' %}{% block head %}{% if not ready and not failed %}<meta http-equiv="refresh" content="3">{% endif %}{% endblock %}
+{% block body %}<h1>{{ place.title }}</h1><p>{{ _("Server #") }}{{ server_id }}</p><div class="panel launch">
+{% if failed %}<p>{{ _("The game server could not start. Try again later.") }}</p>
+{% elif not ready %}<p>{{ _("Starting server...") }}</p>
+{% else %}<p id="status">{{ _("The server is ready.") }}</p>
+<p><button onclick="launchGame()">{{ _("Open game") }}</button></p>
+<p class="hint">{{ _("Use the client's built-in browser to open the game.") }}</p>
+<script type="text/javascript">
+var gameWindow;
+function launchGame() {
+ try {
+  var app = window.external.GetApp();
+  gameWindow = app.CreateGame(2);
+  gameWindow.ExecUrlScript({{ (api+'/game/join.ashx?ticket='+token)|tojson }});
+  document.getElementById('status').innerText = {{ _('Game opened.')|tojson }};
+ } catch (e) {
+  document.getElementById('status').innerText = {{ _('Could not open the game: ')|tojson }} + (e.description || e.message || e.number) + '. ' + {{ _('Use the updated client built-in browser.')|tojson }};
+ }
+}
+</script>{% endif %}</div><p><a href="/places/{{ place.id }}">{{ _("Back to this place") }}</a></p>{% endblock %}

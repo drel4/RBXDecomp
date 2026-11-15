@@ -140,6 +140,7 @@ public:
 
 	bool superSafeOn() const;
 	boost::shared_ptr<Instance> createLocalPlayer(int userId);
+	void resetLocalPlayer();
 
 	// FUNCTION: WEBSERVICE 0x10072560
 	Player* getLocalPlayer() const { return localPlayer.get(); }

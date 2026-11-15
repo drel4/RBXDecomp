@@ -10,6 +10,10 @@
 namespace RBX {
 namespace Security {
 
+#ifdef OPENRBX_NATIVE_SERVER
+#undef None
+#endif
+
 enum Identities
 {
 	Anonymous = 0,

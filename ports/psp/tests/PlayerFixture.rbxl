@@ -1,0 +1,11 @@
+<roblox version="4"><Item class="Workspace"><Properties><string name="Name">Workspace</string></Properties>
+<Item class="Part"><Properties><string name="Name">Floor</string><bool name="Anchored">true</bool><int name="BrickColor">28</int><Vector3 name="size"><X>200</X><Y>2</Y><Z>200</Z></Vector3><CoordinateFrame name="CFrame"><X>0</X><Y>-1</Y><Z>0</Z></CoordinateFrame></Properties></Item>
+<Item class="SpawnLocation"><Properties><string name="Name">Spawn</string><bool name="Anchored">true</bool><int name="BrickColor">194</int><Vector3 name="size"><X>8</X><Y>1.2</Y><Z>8</Z></Vector3><CoordinateFrame name="CFrame"><X>0</X><Y>0</Y><Z>0</Z></CoordinateFrame></Properties></Item>
+<Item class="Part"><Properties><string name="Name">KillBrick</string><bool name="Anchored">true</bool><int name="BrickColor">21</int><Vector3 name="size"><X>4</X><Y>2</Y><Z>10</Z></Vector3><CoordinateFrame name="CFrame"><X>12</X><Y>1</Y><Z>0</Z></CoordinateFrame></Properties>
+<Item class="Script"><Properties><string name="Name">KillBrickScript</string><ProtectedString name="Source"><![CDATA[
+script.Parent.Touched:connect(function(hit)
+    local humanoid=hit.Parent:findFirstChild('Humanoid')
+    if humanoid then humanoid.Health=0 end
+end)
+]]></ProtectedString></Properties></Item></Item>
+</Item></roblox>

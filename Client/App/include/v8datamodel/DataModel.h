@@ -90,6 +90,9 @@ public:
 	virtual ~DataModel();
 
 	void loadContent(ContentId contentId);
+	void setAssetProxyPolicy(int mode);
+	int getAssetProxyPolicy();
+	bool getAssetProxyEnabled();
 	void save(ContentId contentId);
 	std::string httpGet(std::string url, bool synchronous);
 	std::string httpPost(std::string url, std::string data, bool synchronous);

@@ -55,7 +55,7 @@ template class RBX::TToolVerb<RBX::AxisMoveTool, RBX::RunStateVerb>;
 
 namespace RBX {
 
-// FUNCTION: ROBLOX 0x00596660
+// STUB: ROBLOX 0x00596660
 static void FUN_00596660(DataModel* dataModel)
 {
 	if (Network::Players::clientIsPresent(dataModel, true) && !Network::Players::serverIsPresent(dataModel, true)) {
@@ -1008,11 +1008,11 @@ void StopCommand::doIt(IDataState* dataState)
 	service->pause();
 }
 
-// FUNCTION: ROBLOX 0x0059bef0
+// STUB: ROBLOX 0x0059bef0
 bool ResetCommand::isEnabled() const
 {
 	RunState state = runService->getRunState();
-	return (state == RS_RUNNING || state == RS_PAUSED) && !Network::Players::findLocalPlayer(dataModel);
+	return state == RS_RUNNING || state == RS_PAUSED;
 }
 
 // FUNCTION: ROBLOX 0x0059bf30

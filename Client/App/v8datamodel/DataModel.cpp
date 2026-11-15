@@ -1,4 +1,5 @@
 #include "v8datamodel/DataModel.h"
+#include "util/AssetProxy.h"
 
 #include "compat.h"
 #include "gui/GUI.h"
@@ -61,6 +62,24 @@ static Reflection::BoundFuncDesc<DataModel, Instances(ContentId), 1> getContentF
 static Reflection::BoundFuncDesc<DataModel, void(ContentId), 1> loadFunction(
 	&DataModel::loadContent, "Load", "url", Reflection::FunctionDescriptor::NeedTrustedCaller
 );
+
+static Reflection::BoundFuncDesc<DataModel, void(int), 1> setAssetPolicyFunction(
+	&DataModel::setAssetProxyPolicy, "SetAssetProxyPolicy", "mode", Reflection::FunctionDescriptor::NeedTrustedCaller
+);
+static Reflection::BoundFuncDesc<DataModel, int(), 0> getAssetPolicyFunction(
+	&DataModel::getAssetProxyPolicy, "GetAssetProxyPolicy", Reflection::FunctionDescriptor::AnyCaller
+);
+static Reflection::BoundFuncDesc<DataModel, bool(), 0> getAssetEnabledFunction(
+	&DataModel::getAssetProxyEnabled, "GetAssetProxyEnabled", Reflection::FunctionDescriptor::AnyCaller
+);
+
+void DataModel::setAssetProxyPolicy(int mode)
+{
+	if (mode < -1 || mode > 1) throw std::runtime_error("Invalid asset proxy policy");
+	AssetProxy::setPolicy(this, mode);
+}
+int DataModel::getAssetProxyPolicy() { return AssetProxy::policy(); }
+bool DataModel::getAssetProxyEnabled() { return AssetProxy::enabled(); }
 
 static Reflection::BoundFuncDesc<DataModel, void(ContentId), 1> saveFunction(
 	&DataModel::save, "Save", "url", Reflection::FunctionDescriptor::NeedTrustedCaller
@@ -209,12 +228,15 @@ float DataModel::step(float timeInterval)
 	return timeInterval;
 }
 
-// FUNCTION: WEBSERVICE 0x10072810
-// FUNCTION: ROBLOX 0x0058f300
+// STUB: WEBSERVICE 0x10072810
+// STUB: ROBLOX 0x0058f300
 void DataModel::onEvent(const RunService* source, RunTransition event)
 {
 	switch (event.newState) {
 	case RS_NORMAL:
+		if (Network::Players* players = find<Network::Players>()) {
+			players->resetLocalPlayer();
+		}
 		if (event.oldState == RS_RUNNING) {
 			workspace->reset();
 		}
@@ -690,6 +712,7 @@ void DataModel::raiseClose()
 // FUNCTION: ROBLOX 0x00594360
 DataModel::~DataModel()
 {
+	AssetProxy::releasePolicy(this);
 	stopListening(runService, this);
 }
 
@@ -697,6 +720,7 @@ DataModel::~DataModel()
 // FUNCTION: ROBLOX 0x00594980
 void DataModel::closeDataModel(boost::shared_ptr<DataModel> dataModel, bool joinRunThread)
 {
+	AssetProxy::releasePolicy(dataModel.get());
 	dataModel->isInitialized = false;
 
 	boost::shared_ptr<RunService> runService;

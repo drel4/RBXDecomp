@@ -199,6 +199,14 @@ public:
 	// FUNCTION: ROBLOX 0x004c64e0
 	boost::shared_ptr<Instance> getPlayer() { return shared_from(findTargetPlayer()); }
 
+	// A connection can own its replicated Player before RequestCharacter has
+	// assigned ClientProxy::remotePlayer (e.g. while markers are still pending).
+	bool ownsRemoteInstance(const Instance* instance) const
+	{
+		RepConts::const_iterator item = replicationContainers.find(instance);
+		return item != replicationContainers.end() && item->second.deleteOnDisconnect;
+	}
+
 	static Reflection::BoundProp<int, 1> prop_maxDataModelSendBuffer;
 	static Reflection::SignalDesc<Replicator, void(std::string, bool)> event_Disconnection;
 

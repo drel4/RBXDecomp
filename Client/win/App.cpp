@@ -144,6 +144,7 @@ STDMETHODIMP CApp::CreateGame(WINDOW_TYPE WindowType, IWorkspace** result)
 			break;
 		case PlayWindowType: {
 			doc = static_cast<CRobloxDoc*>(app->FUN_0044fbc0());
+			doc->setOnlinePlay();
 			workspace = doc->m_unk0x78;
 
 			POSITION pos = doc->GetFirstViewPosition();

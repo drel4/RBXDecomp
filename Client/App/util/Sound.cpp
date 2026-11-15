@@ -1284,3 +1284,8 @@ template void RBX::Name::callDoDeclare<sStockSound>();
 template RBX::GameSettings& RBX::GlobalSettingsItem<RBX::GameSettings, RBX::sGameSettings>::singleton();
 template const RBX::FactoryProduct<StockSound, RBX::Soundscape::SoundChannel, sStockSound>::Creator
 	RBX::FactoryProduct<StockSound, RBX::Soundscape::SoundChannel, sStockSound>::creator;
+
+// Reflection alone does not instantiate the named factory under this toolchain.
+// XML and network replication both create serialized "Sound" instances by name.
+template const RBX::FactoryProduct<RBX::Soundscape::SoundChannel, RBX::Instance, RBX::Soundscape::sSoundChannel>::Creator
+	RBX::FactoryProduct<RBX::Soundscape::SoundChannel, RBX::Instance, RBX::Soundscape::sSoundChannel>::creator;

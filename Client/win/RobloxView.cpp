@@ -258,7 +258,7 @@ void CRobloxView::FUN_0045dbf0()
 	FUN_0045da90(0);
 }
 
-// FUNCTION: ROBLOX 0x0045dc00
+// STUB: ROBLOX 0x0045dc00
 void CRobloxView::FUN_0045dc00()
 {
 	CRect rect;

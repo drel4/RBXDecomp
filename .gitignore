@@ -6,6 +6,7 @@ reccmp-build.yml
 /.claude
 /.env
 /.venv
+/.toolchains/
 /env/
 /venv/
 /ENV/
@@ -35,3 +36,14 @@ vc[0-9][0-9].pdb
 .cache/
 
 /out*.json
+
+# Instance secrets, runtime state and private local tools
+linuxserver.txt
+**/private.env
+**/cookies.txt
+**/owner-access.txt
+**/data/
+**/runtime/
+*.dmp
+screenshot-*.png
+/ports/psp/content/*.rbxm

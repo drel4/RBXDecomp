@@ -126,12 +126,15 @@ RakNet::BitStream& operator>> <int>(RakNet::BitStream& stream, int& value)
 	return stream;
 }
 
-// FUNCTION: WEBSERVICE 0x101ab630 FOLDED
-// FUNCTION: ROBLOX 0x004be640 FOLDED
+// STUB: WEBSERVICE 0x101ab630 FOLDED
+// STUB: ROBLOX 0x004be640 FOLDED
 template <>
 RakNet::BitStream& operator>> <long>(RakNet::BitStream& stream, long& value)
 {
-	stream.Read(value);
+	// A legacy Windows long is a 32-bit wire value, even on LP64 hosts.
+	int wireValue = 0;
+	stream.Read(wireValue);
+	value = wireValue;
 	return stream;
 }
 
@@ -195,11 +198,11 @@ RakNet::BitStream& operator>> <double>(RakNet::BitStream& stream, double& value)
 	return stream;
 }
 
-// FUNCTION: WEBSERVICE 0x101ab720
-// FUNCTION: ROBLOX 0x004be730
+// STUB: WEBSERVICE 0x101ab720
+// STUB: ROBLOX 0x004be730
 RakNet::BitStream& operator<<(RakNet::BitStream& stream, const std::string& value)
 {
-	stream.Write(value.size());
+	stream.Write(static_cast<unsigned int>(value.size()));
 
 	stringCompressor->EncodeString(value.c_str(), value.size() + 1, &stream);
 	return stream;

@@ -7,6 +7,9 @@
 #include "v8datamodel/ICameraOwner.h"
 #include "v8datamodel/ICharacterSubject.h"
 #include "v8datamodel/Workspace.h"
+#include "v8kernel/Constants.h"
+
+#include <cmath>
 
 namespace RBX {
 
@@ -390,8 +393,8 @@ bool Camera::zoom(float in)
 	return isCharacterCamera() ? characterZoom(in) : nonCharacterZoom(in);
 }
 
-// FUNCTION: WEBSERVICE 0x100c3500
-// FUNCTION: ROBLOX 0x005d7110
+// STUB: WEBSERVICE 0x100c3500
+// STUB: ROBLOX 0x005d7110
 void Camera::onHeartbeat()
 {
 	updateGoal();
@@ -402,7 +405,7 @@ void Camera::onHeartbeat()
 	}
 
 	G3D::CoordinateFrame oldC = gCamera.getCoordinateFrame();
-	G3D::CoordinateFrame newC = oldC.lerp(adjustedGoal, 0.9f);
+	G3D::CoordinateFrame newC = oldC.lerp(adjustedGoal, 1.0f - powf(0.1f, Constants::uiDt() * 30.0f));
 
 	setGCameraCoordinateFrame(newC);
 
@@ -595,8 +598,8 @@ void Camera::setImageServerViewNoLerp(const G3D::CoordinateFrame& modelCoord, co
 	goalToCamera();
 }
 
-// FUNCTION: WEBSERVICE 0x100c4d80
-// FUNCTION: ROBLOX 0x005d88e0
+// STUB: WEBSERVICE 0x100c4d80
+// STUB: ROBLOX 0x005d88e0
 void Camera::doFly(const NavKeys& nav, int steps)
 {
 	if (!nav.navKeyDown()) {
@@ -604,10 +607,10 @@ void Camera::doFly(const NavKeys& nav, int steps)
 	}
 
 	float acceleration = 2.0f;
-	if (steps > 120) {
+	if (steps > 4.0f / Constants::uiDt()) {
 		acceleration = 8.0f;
 	}
-	else if (steps > 60) {
+	else if (steps > 2.0f / Constants::uiDt()) {
 		acceleration = 4.0f;
 	}
 
@@ -633,7 +636,7 @@ void Camera::doFly(const NavKeys& nav, int steps)
 		delta -= right * acceleration;
 	}
 
-	current.translation += delta;
+	current.translation += delta * Constants::uiDt() * 30.0f;
 
 	setCameraType(FIXED_CAMERA);
 	setCameraCoordinateFrameNoLerp(current);

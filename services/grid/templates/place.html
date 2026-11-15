@@ -1,0 +1,21 @@
+{% extends 'base.html' %}{% block title %}{{ place.title }} - notblox{% endblock %}{% block body %}
+<h1>{{ place.title }}</h1>
+<img class="hero" src="/thumbs/{{ place.id }}.png" width="480" height="300" alt="{{ place.title }}">
+<p class="description">{{ place.description }}</p>
+{% if account_user %}<p>{{ _("Playing as") }} <b>{{ account_user.nickname }}</b>.</p>
+<form action="/play/{{ place.id }}" method="post"><input type="hidden" name="csrf" value="{{ session.csrf }}">
+<label for="server">{{ _("Server") }}</label><select id="server" name="server">
+<option value="auto">{{ _("Join an available server") }}</option>
+<option value="private">{{ _('Start / join my friends-only server') }}</option>
+{% for s in servers %}<option value="{{ s.id }}"{% if s.players >= s.limit %} disabled{% endif %}>#{{ s.id }} - {{ s.players }}/{{ s.limit }} {{ _("players -") }} {{ _(s.state) }}{% if s.private_owner %} — {{ _('Friends only') }}{% endif %}{% if s.players >= s.limit %} {{ _("(full)") }}{% endif %}</option>{% endfor %}
+<option value="new">{{ _("Start a new server (") }}{{ place.player_limit }} {{ _("players max)") }}</option></select>
+<button type="submit">{{ _("Play") }}</button>
+<p class="hint">{{ _("Use the client's built-in browser to play.") }}</p></form>
+{% else %}<p><a href="/login">{{ _("Log in to play") }}</a> &middot; <a href="/signin">{{ _("Sign up") }}</a></p>{% endif %}
+<h2>{{ _("Servers") }}</h2><p><a href="/places/{{ place.id }}">{{ _("Refresh") }}</a></p>
+{% if servers %}<table class="listing"><tr><th>{{ _("Server") }}</th><th>{{ _("Players") }}</th><th>{{ _("Status") }}</th></tr>
+{% for s in servers %}<tr><td>#{{ s.id }}{% if s.private_owner %} — {{ _('Friends only') }}{% endif %}</td><td>{{ s.players }}/{{ s.limit }}</td><td>{{ _(s.state) }}
+{% if account_user and s.private_owner==account_user.id %}<form method="post" action="/servers/{{ s.id }}/stop"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button>{{ _('Stop my private server') }}</button></form>{% endif %}
+</td></tr>{% endfor %}</table>{% else %}<p>{{ _("No running servers.") }}</p>{% endif %}
+<p><a href="/asset/{{ place.id }}">{{ _("Download place (.rbxl)") }}</a></p>
+{% endblock %}

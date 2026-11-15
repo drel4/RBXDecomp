@@ -76,7 +76,7 @@
 #       error G3D only supports the gcc compiler on Linux.
 #   endif
 
-#   ifndef __i386__
+#   if !defined(__i386__) && !defined(__x86_64__)
 #       error G3D only supports x86 machines on Linux.
 #   endif
 

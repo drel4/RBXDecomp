@@ -1,6 +1,7 @@
 #include "BrowserView.h"
 
 #include "BrowserViewExternal.h"
+#include "App.h"
 #include "LogManager.h"
 #include "MainFrm.h"
 #include "Roblox.h"
@@ -299,9 +300,14 @@ HRESULT FUN_0040bfb0(CComObjectNoLock<CBrowserViewExternal>** p_unk0x04, void* p
 	return result;
 }
 
-// FUNCTION: ROBLOX 0x0040c3c0
+// STUB: ROBLOX 0x0040c3c0
 HRESULT CBrowserView::OnGetExternal(LPDISPATCH* lppDispatch)
 {
+	// Do not hand the native execution bridge to external or error pages.
+	if (!RBX::Http::isRobloxSite(GetLocationURL())) {
+		*lppDispatch = NULL;
+		return E_ACCESSDENIED;
+	}
 	if (!m_unk0x2b0) {
 		CComObjectNoLock<CBrowserViewExternal>* external;
 		HRESULT result = FUN_0040bfb0(&external, NULL);
@@ -397,13 +403,15 @@ STDMETHODIMP CBrowserViewExternal::get_IsRobloxIDE(VARIANT_BOOL* pVal)
 	return S_OK;
 }
 
-// FUNCTION: ROBLOX 0x0040d390
+// STUB: ROBLOX 0x0040d390
 STDMETHODIMP CBrowserViewExternal::GetApp(IDispatch** result)
 {
 	AFX_MANAGE_STATE(AfxGetAppModuleState());
 
-	CComPtr<IApp> app;
-	HRESULT hr = app.CoCreateInstance(CLSID_App);
+	// Keep the bridge in this portable client instead of activating whichever
+	// historical installation happens to own the machine's COM registration.
+	CComObject<CApp>* object = NULL;
+	HRESULT hr = CComObject<CApp>::CreateInstance(&object);
 
 	if (hr != S_OK) {
 		CString message;
@@ -411,6 +419,7 @@ STDMETHODIMP CBrowserViewExternal::GetApp(IDispatch** result)
 		return LogManager::ReportCOMError(CLSID_BrowserViewExternal, message, hr);
 	}
 
+	CComPtr<IApp> app(object);
 	CComPtr<IDispatch> dispatch(app);
 	return dispatch.CopyTo(result);
 }

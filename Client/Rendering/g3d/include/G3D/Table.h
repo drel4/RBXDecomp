@@ -59,10 +59,15 @@ inline unsigned int hashCode(const G3D::uint64 a) {
 }
 
 inline unsigned int hashCode(const void* a) {
-	// Avoid 64-bit pointer cast problems by turning
-	// the pointer itself into an array of integers.
-	int* intPtr = (int*)(((unsigned char*)&a) + (sizeof(void*) - sizeof(int)));
-	return *intPtr;
+	// Fold every pointer word without aliasing violations on LP64 hosts.
+	unsigned int result = 0;
+	const unsigned char* bytes = reinterpret_cast<const unsigned char*>(&a);
+	for (size_t i = 0; i < sizeof(a); i += sizeof(unsigned int)) {
+		unsigned int word;
+		memcpy(&word, bytes + i, sizeof(word));
+		result ^= word;
+	}
+	return result;
 }
 
 /**

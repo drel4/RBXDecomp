@@ -1,0 +1,10 @@
+{% extends 'base.html' %}{% block body %}
+<h1>{{ _("Delete place") }}</h1>
+<p>{{ _("Permanently delete") }} <b>{{ place.title }}</b>?</p>
+<p>{{ _("This stops all servers for this place and removes its listing, uploaded place file and thumbnail. This cannot be undone.") }}</p>
+<form method="post" action="/manage/{{ place.id }}/delete">
+<input type="hidden" name="csrf" value="{{ session.csrf }}">
+<input type="hidden" name="confirm" value="delete">
+<button type="submit">{{ _("Delete place permanently") }}</button> <a href="/manage">{{ _("Cancel") }}</a>
+</form>
+{% endblock %}

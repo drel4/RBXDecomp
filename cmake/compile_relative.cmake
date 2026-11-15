@@ -3,7 +3,14 @@ set(after_separator FALSE)
 math(EXPR last "${CMAKE_ARGC} - 1")
 foreach(index RANGE ${last})
   if (after_separator)
-    list(APPEND original "${CMAKE_ARGV${index}}")
+    set(argument "${CMAKE_ARGV${index}}")
+    # A trailing backslash in /Fd<directory> escapes the CMake list separator,
+    # swallowing the following -c flag and making cl.exe try to link a program.
+    # MSVC accepts a forward slash at the end of this output directory too.
+    if (argument MATCHES "^/F[do]" AND argument MATCHES "\\\\$")
+      string(REGEX REPLACE "\\\\$" "/" argument "${argument}")
+    endif()
+    list(APPEND original "${argument}")
   elseif ("${CMAKE_ARGV${index}}" STREQUAL "--")
     set(after_separator TRUE)
   endif()

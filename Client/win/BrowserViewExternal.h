@@ -15,7 +15,8 @@ class __declspec(novtable) CBrowserViewExternal
 	  public ISupportErrorInfoImpl<&IID_IBrowserViewExternal>,
 	  public IConnectionPointContainerImpl<CBrowserViewExternal>,
 	  public CProxy_IBrowserViewExternalEvents<CBrowserViewExternal>,
-	  public IDispatchImpl<IBrowserViewExternal, &IID_IBrowserViewExternal, &LIBID_RobloxLib, 1, 0>
+	  // Load the executable's embedded type library for portable installations.
+	  public IDispatchImpl<IBrowserViewExternal, &IID_IBrowserViewExternal, &LIBID_RobloxLib, 0xFFFF, 0xFFFF>
 {
 public:
 	CBrowserViewExternal() : m_unk0x1c(VARIANT_FALSE) {}

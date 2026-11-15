@@ -1,4 +1,5 @@
 #include "util/ContentProvider.h"
+#include "util/AssetProxy.h"
 
 #include "compat.h"
 #include "decomp.h"
@@ -442,10 +443,13 @@ worker_thread::work_result ContentProvider::processRequests()
 	return worker_thread::more;
 }
 
-// FUNCTION: WEBSERVICE 0x10053050
-// FUNCTION: ROBLOX 0x00580b60
+// STUB: WEBSERVICE 0x10053050
+// STUB: ROBLOX 0x00580b60
 ContentProvider::CachedContent* ContentProvider::loadContent(ContentId id, HttpRequestType httpRequestType)
 {
+	if (AssetProxy::enabled() && id.toString().compare(0, 13, "rbxassetid://") == 0) {
+		id = ContentId(AssetProxy::url(id.toString()));
+	}
 	if (id.isNull()) {
 		return NULL;
 	}
@@ -493,6 +497,13 @@ ContentProvider::CachedContent* ContentProvider::loadContent(ContentId id, HttpR
 	}
 
 	if (id.isHttp()) {
+		// A thumbnail retry must still render when legacy asset hosts are down.
+		// Local/bundled and cached assets were resolved above. Returning no
+		// content here uses the renderer's normal missing-texture fallback.
+		char offline[2] = {0};
+		if (GetEnvironmentVariableA("OPENRBX_THUMBNAIL_OFFLINE", offline, sizeof(offline)) && offline[0] == '1') {
+			return NULL;
+		}
 		switch (httpRequestType) {
 		case AsyncHttpRequest: {
 			boost::mutex::scoped_lock lock(requestSync);
@@ -653,13 +664,13 @@ void ContentProvider::load(ContentId id, std::vector<boost::shared_ptr<Instance>
 	SerializerV2().loadInstances(root.get(), instances);
 }
 
-// FUNCTION: WEBSERVICE 0x10054040
-// FUNCTION: ROBLOX 0x00581a50
+// STUB: WEBSERVICE 0x10054040
+// STUB: ROBLOX 0x00581a50
 ContentProvider::ContentProvider()
 {
 	char path[MAX_PATH];
 	if (SHGetFolderPathAndSubDir(NULL, CSIDL_COMMON_APPDATA, NULL, 0, "Roblox\\content\\", path) == S_OK) {
-		ContentProvider::singleton().setAssetFolder(path);
+		setAssetFolder(path);
 	}
 	else {
 		StandardOut::singleton()->print(MESSAGE_WARNING, "Failed to get asset folder");

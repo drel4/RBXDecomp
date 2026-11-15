@@ -16,20 +16,13 @@ HealthHud::HealthHud()
 	setGuiSize(G3D::Vector2(10, 100));
 }
 
-// FUNCTION: ROBLOX 0x0065f3b0
+// STUB: ROBLOX 0x0065f3b0
 void HealthHud::render2d(Adorn* adorn)
 {
 	G3D::Rect2D viewport = adorn->getViewport();
 	float height = viewport.height() * 0.125f;
 	setGuiSize(G3D::Vector2(0.1f * height, height));
 	int fontSize = (int) (height * 0.18f);
-
-	if (!visit) {
-		visit = shared_from(ServiceProvider::find<Visit>(this));
-		if (!visit) {
-			return;
-		}
-	}
 
 	Humanoid* humanoid = Humanoid::getLocalHumanoidFromContext(this);
 	if (humanoid == NULL) {
@@ -39,7 +32,9 @@ void HealthHud::render2d(Adorn* adorn)
 	Rect rect = getMyRect();
 	Rect healthRect = rect;
 	Rect damageRect = rect;
-	float healthY = rect.high.y - (humanoid->getHealth() / humanoid->getMaxHealth()) * (rect.high.y - rect.low.y);
+	float fraction = humanoid->getMaxHealth() > 0.0f
+		? G3D::clamp(humanoid->getHealth() / humanoid->getMaxHealth(), 0.0f, 1.0f) : 0.0f;
+	float healthY = rect.high.y - fraction * (rect.high.y - rect.low.y);
 	healthRect.low.y = healthY;
 	damageRect.high.y = healthY;
 

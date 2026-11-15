@@ -82,6 +82,7 @@ public:
 	static bool serverIsPresent(const Instance* context, bool testInDatamodel);
 
 	void start(int port, int threadSleepTime);
+	void setPlayerLimit(int limit);
 	void stop(int blockDuration);
 	int getClientCount();
 

@@ -1,0 +1,9 @@
+{% extends 'base.html' %}{% block body %}<h1>{{ _('Upload a T-shirt') }}</h1>
+<p>{{ _('Upload a PNG or JPEG logo, up to 2 MB and 1024 by 1024 pixels. Transparent PNGs are supported. Images are fitted into a 256 by 256 square.') }}</p>
+<p>{{ _('An admin must approve your image before it appears in the marketplace or can be worn.') }}</p>
+{% if error %}<p class="notice">{{ _(error) }}</p>{% endif %}
+<form method="post" enctype="multipart/form-data"><input type="hidden" name="csrf" value="{{ session.csrf }}">
+<label for="title">{{ _('Title') }}</label><input id="title" name="title" maxlength="80" required>
+<label for="image">{{ _('Image') }}</label><input id="image" type="file" name="image" accept="image/png,image/jpeg" required><p><button>{{ _('Submit for review') }}</button></p></form>
+<h2>{{ _('Your uploads') }}</h2><table class="listing"><tr><th>{{ _('Image') }}</th><th>{{ _('Title') }}</th><th>{{ _('Status') }}</th></tr>
+{% for shirt in shirts %}<tr><td><img src="/tshirts/{{ shirt.id }}.png" width="96" height="96" alt="{{ shirt.title }}"></td><td>{{ shirt.title }}</td><td>{{ _(shirt.state) }}{% if shirt.reason %}<p>{{ shirt.reason }}</p>{% endif %}</td></tr>{% else %}<tr><td colspan="3">{{ _('No uploads yet.') }}</td></tr>{% endfor %}</table>{% endblock %}

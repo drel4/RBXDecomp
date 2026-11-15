@@ -26,6 +26,12 @@ class DxUserInput : public RBX::UserInputBase,
 					public RBX::Listener<RBX::RunService, RBX::RunTransition>,
 					public RBX::Listener<RBX::RunService, RBX::Heartbeat>
 {
+public:
+	enum
+	{
+		WM_UPDATE_CURSOR = WM_APP + 0x241
+	};
+
 private:
 	undefined4 m_unk0x30;                         // 0x30
 	mutable ATL::CCriticalSection m_unk0x34;      // 0x34
@@ -34,12 +40,15 @@ private:
 	int m_unk0x54;                                // 0x54
 	G3D::Rect2D m_unk0x58;                        // 0x58
 	bool m_unk0x68;                               // 0x68
+	bool mouseConfined;                           // 0x69 (previous alignment padding)
+	bool keyboardReleasedUntilClick;              // 0x6a (previous alignment padding)
 	WrapMode m_unk0x6c;                           // 0x6c
 	G3D::Vector2 m_unk0x70;                       // 0x70
 	bool m_unk0x78;                               // 0x78
 	bool m_unk0x79;                               // 0x79
 	bool m_unk0x7a;                               // 0x7a
 	BYTE m_unk0x7b[0x100];                        // 0x7b
+	bool mouseReleasedUntilClick;                 // 0x17b (previous alignment padding)
 	SDLKey m_unk0x17c;                            // 0x17c
 	CWnd* m_unk0x180;                             // 0x180
 	HWND m_unk0x184;                              // 0x184
@@ -65,6 +74,9 @@ private:
 	static bool FUN_0046c780();
 	void FUN_0046c950(const G3D::Vector2& mouseDelta, G3D::Vector2& wrapMouseDelta);
 	void FUN_0046cd90();
+	void releaseMouse(bool restoreCursor);
+	void updateMouseConfinement();
+	bool viewportHasKeyboardFocus() const;
 
 protected:
 	virtual G3D::Vector2 getCursorPosition();
@@ -87,6 +99,18 @@ public:
 	void FUN_0046ca90();
 	void FUN_0046cbc0(UINT message, int wParam, LPARAM lParam);
 	void FUN_0046d0a0();
+	void releaseInput(bool restoreCursor = false, bool untilClick = false, bool pointerUntilClick = true);
+	void releasePointer(bool restoreCursor = false);
+	bool hasKeyboardFocus() const
+	{
+		ATL::CCritSecLock lock(m_unk0x34);
+		return !keyboardReleasedUntilClick && viewportHasKeyboardFocus();
+	}
+	bool hasMouseCapture() const
+	{
+		ATL::CCritSecLock lock(m_unk0x34);
+		return m_unk0x68;
+	}
 
 	// SYNTHETIC: ROBLOX 0x0046d650
 	// DxUserInput::`scalar deleting destructor'

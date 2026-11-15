@@ -1,9 +1,12 @@
 #include "MainFrm.h"
+#include "resource.h"
+#include "util/AssetProxy.h"
 
 #include "PropGrid.h"
 #include "RBXImage.h"
 #include "RenderSettings.h"
 #include "Roblox.h"
+#include "RobloxDoc.h"
 #include "RobloxReportView.h"
 #include "SelectionCaption.h"
 #include "SettingsDialog.h"
@@ -33,6 +36,31 @@ static UINT hiddenCommands[] = {0xe100, 0xe102, 0x8025, 0x80b7, 0xe123, 0xe120, 
 								0x80bf, 0x803d, 0x8061, 0x80a5, 0x8013, 0x8014, 0x8047, 0xe130};
 
 IMPLEMENT_DYNAMIC(CMainFrame, CXTPMDIFrameWnd)
+
+void CMainFrame::OnToggleAssetProxy()
+{
+	if (RBX::AssetProxy::policy() != -1) return;
+	bool active = !RBX::AssetProxy::preference();
+	RBX::AssetProxy::setEnabled(active);
+	AfxGetApp()->WriteProfileInt("Settings", "AssetProxy", active ? 1 : 0);
+}
+
+void CMainFrame::OnUpdateAssetProxy(CCmdUI* ui)
+{
+	ui->Enable(RBX::AssetProxy::policy() == -1);
+	ui->SetCheck(RBX::AssetProxy::enabled() ? 1 : 0);
+}
+
+
+void CMainFrame::OnUpdateFrameTitle(BOOL bAddToTitle)
+{
+	CRobloxDoc* doc = DYNAMIC_DOWNCAST(CRobloxDoc, GetActiveDocument());
+	if (doc && doc->isOnlinePlay()) {
+		UpdateFrameTitleForDocument(NULL);
+		return;
+	}
+	CXTPMDIFrameWnd::OnUpdateFrameTitle(bAddToTitle);
+}
 
 IMPLEMENT_DYNCREATE(MyXTPCommandBars, CXTPCommandBars)
 
@@ -632,7 +660,7 @@ bool CMainFrame::FUN_00434970(bool p_unk0x04)
 	return true;
 }
 
-// FUNCTION: ROBLOX 0x00434b80
+// STUB: ROBLOX 0x00434b80
 void CMainFrame::FUN_00434b80()
 {
 	if (!m_unk0xec) {
@@ -1063,6 +1091,8 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 // clang-format off
 BEGIN_MESSAGE_MAP(CMainFrame, CXTPMDIFrameWnd)
+	ON_COMMAND(ID_TOOLS_ASSET_PROXY, OnToggleAssetProxy)
+	ON_UPDATE_COMMAND_UI(ID_TOOLS_ASSET_PROXY, OnUpdateAssetProxy)
 	ON_WM_ACTIVATE()
 	ON_WM_GETMINMAXINFO()
 	ON_WM_ACTIVATEAPP()
@@ -1105,7 +1135,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CXTPMDIFrameWnd)
 END_MESSAGE_MAP()
 // clang-format on
 
-// FUNCTION: ROBLOX 0x00436350
+// STUB: ROBLOX 0x00436350
 CMainFrame::CMainFrame()
 	: m_unk0xe0(false), m_unk0xe1(false), m_unk0xe4(NULL), m_unk0xe8(NULL), m_unk0xec(false), m_unk0xed(false)
 {

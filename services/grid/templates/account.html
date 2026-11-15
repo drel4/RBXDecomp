@@ -1,0 +1,10 @@
+{% extends 'base.html' %}{% block body %}<h1>{{ account_user.nickname }}</h1>
+<p><a href="/friends">{{ _('Friends') }}</a> | <a href="/marketplace">{{ _('Choose a T-shirt') }}</a> | <a href="/tshirts/upload">{{ _('Your uploads') }}</a></p>
+{% if account_user.tshirt_id %}<img src="/tshirts/{{ account_user.tshirt_id }}.png" width="128" height="128" alt="{{ _('T-shirt') }}">{% endif %}
+<h2>{{ _("Avatar colors") }}</h2><p>{{ _("Colors are saved to your account and used when playing on this instance.") }}</p>
+{% if error %}<p class="notice">{{ _(error) }}</p>{% endif %}
+<form method="post"><input type="hidden" name="csrf" value="{{ session.csrf }}">
+{% for part in parts %}{% set part_index=loop.index0 %}<label for="{{ part }}">{{ _(part.replace('Arm',' arm').replace('Leg',' leg')) }}</label><select id="{{ part }}" name="{{ part }}">
+{% for number,label in colors.items() %}<option value="{{ number }}"{% if selected[part_index]==number %} selected{% endif %}>{{ _(label) }}</option>{% endfor %}</select>{% endfor %}
+<p><button>{{ _("Save colors") }}</button></p></form>
+<form method="post" action="/logout"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button>{{ _("Log out") }}</button></form>{% endblock %}

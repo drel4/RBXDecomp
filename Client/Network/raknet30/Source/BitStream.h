@@ -930,9 +930,10 @@ namespace RakNet
 		if (var > 1.0f)
 			var=1.0f;
 #ifdef _DEBUG
-		assert(sizeof(unsigned long)==4);
+		assert(sizeof(unsigned int)==4);
 #endif
-		Write((unsigned long)((var+1.0)*2147483648.0));
+		// The legacy compressed-double wire representation is 32 bits on LP64 too.
+		Write((unsigned int)((var+1.0)*2147483648.0));
 	}
 
 	/// Write any integral type to a bitstream.  If the current value is different from the last value
@@ -1147,7 +1148,7 @@ namespace RakNet
 	template <>
 		inline bool BitStream::ReadCompressed(double &var)
 	{
-		unsigned long compressedFloat;
+		unsigned int compressedFloat;
 		if (Read(compressedFloat))
 		{
 			var = ((double)compressedFloat / 2147483648.0 - 1.0);

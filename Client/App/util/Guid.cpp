@@ -49,8 +49,8 @@ void Guid::assign(Data data)
 	this->data = data;
 }
 
-// FUNCTION: WEBSERVICE 0x1003d4f0
-// FUNCTION: ROBLOX 0x005ba350
+// STUB: WEBSERVICE 0x1003d4f0
+// STUB: ROBLOX 0x005ba350
 bool Guid::Data::operator<(const Data& other) const
 {
 	const Name* otherScope = other.scope;
@@ -59,6 +59,7 @@ bool Guid::Data::operator<(const Data& other) const
 
 	if (thisScope != otherScope) {
 		order = thisScope->name.compare(otherScope->name);
+		order = (order > 0) - (order < 0);
 
 		if (order != -1 && order != 0) {
 			return false;
@@ -72,8 +73,8 @@ bool Guid::Data::operator<(const Data& other) const
 	return true;
 }
 
-// FUNCTION: WEBSERVICE 0x1003d540
-// FUNCTION: ROBLOX 0x005ba3a0
+// STUB: WEBSERVICE 0x1003d540
+// STUB: ROBLOX 0x005ba3a0
 int Guid::compare(const Guid* a, const Guid* b)
 {
 	const Name* scopeA = a != NULL ? a->data.scope : NULL;
@@ -91,6 +92,7 @@ int Guid::compare(const Guid* a, const Guid* b)
 	}
 	else {
 		order = scopeA->name.compare(scopeB->name);
+		order = (order > 0) - (order < 0);
 	}
 
 	if (order != -1) {

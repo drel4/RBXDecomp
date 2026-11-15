@@ -87,7 +87,7 @@ void FUN_0046f230(HRESULT hr, const GUID& guid)
 	throw exception;
 }
 
-// FUNCTION: ROBLOX 0x0046f420
+// STUB: ROBLOX 0x0046f420
 void CWorkspace::FUN_0046f420()
 {
 	if (m_unk0x24) {

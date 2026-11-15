@@ -433,6 +433,22 @@ boost::shared_ptr<Instance> Players::createLocalPlayer(int userId)
 	return localPlayer;
 }
 
+void Players::resetLocalPlayer()
+{
+	boost::shared_ptr<Player> previous = localPlayer;
+	if (!previous) {
+		return;
+	}
+	if (ModelInstance* character = previous->getCharacter()) {
+		character->setParent(NULL);
+	}
+	previous->setCharacter(NULL);
+	previous->setParent(NULL);
+	localPlayer.reset();
+	raisePropertyChanged(propLocalPlayer);
+	Notifier<Players, SuperSafeChanged>::raise(SuperSafeChanged(superSafeOn()));
+}
+
 // FUNCTION: WEBSERVICE 0x10195890
 // FUNCTION: ROBLOX 0x004b6e20
 void Players::addChatMessage(const ChatMessage& message)

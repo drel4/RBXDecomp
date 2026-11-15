@@ -964,6 +964,20 @@ public:
 		return std::auto_ptr<typename TypedPropertyDescriptor<T>::GetSet>(new SetImpl<Setter>(set));
 	}
 
+#if defined(OPENRBX_NATIVE_SERVER) && defined(__LP64__)
+	// GNU NULL has type long on LP64. Preserve the legacy null-accessor overloads.
+	template <class Getter, class Setter>
+	static std::auto_ptr<typename TypedPropertyDescriptor<T>::GetSet> getset(Getter get, long)
+	{
+		return std::auto_ptr<typename TypedPropertyDescriptor<T>::GetSet>(new GetImpl<Getter>(get));
+	}
+	template <class Getter, class Setter>
+	static std::auto_ptr<typename TypedPropertyDescriptor<T>::GetSet> getset(long, Setter set)
+	{
+		return std::auto_ptr<typename TypedPropertyDescriptor<T>::GetSet>(new SetImpl<Setter>(set));
+	}
+#endif
+
 	// clang-format off
 	// TEMPLATE: WEBSERVICE 0x10045640
 	// TEMPLATE: ROBLOX 0x005db3e0

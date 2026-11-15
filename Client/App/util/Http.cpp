@@ -1,4 +1,5 @@
 #include "util/Http.h"
+#include "util/AssetProxy.h"
 
 #include "compat.h"
 #include "util/ContentProvider.h"
@@ -68,6 +69,26 @@ public:
 };
 
 namespace RBX {
+
+namespace AssetProxy {
+static volatile LONG active = 1;
+static volatile LONG forced = -1;
+static boost::mutex policyMutex;
+static const void* policyOwner = NULL;
+bool preference() { return InterlockedCompareExchange(&active, 0, 0) != 0; }
+int policy() { return InterlockedCompareExchange(&forced, 0, 0); }
+bool enabled() { int mode = policy(); return mode < 0 ? preference() : mode != 0; }
+void setEnabled(bool value) { InterlockedExchange(&active, value ? 1 : 0); }
+void setPolicy(const void* owner, int mode) {
+	boost::mutex::scoped_lock lock(policyMutex);
+	policyOwner = owner;
+	InterlockedExchange(&forced, mode);
+}
+void releasePolicy(const void* owner) {
+	boost::mutex::scoped_lock lock(policyMutex);
+	if (policyOwner == owner) { policyOwner = NULL; InterlockedExchange(&forced, -1); }
+}
+}
 
 // FUNCTION: WEBSERVICE 0x10034b40
 // FUNCTION: ROBLOX 0x00583210
@@ -140,8 +161,8 @@ bool Http::isScript(const char* url)
 	return false;
 }
 
-// FUNCTION: WEBSERVICE 0x1003ab10
-// FUNCTION: ROBLOX 0x00588b80
+// STUB: WEBSERVICE 0x1003ab10
+// STUB: ROBLOX 0x00588b80
 bool Http::isRobloxSite(const char* url)
 {
 	CUrl crack;
@@ -153,7 +174,10 @@ bool Http::isRobloxSite(const char* url)
 	case ATL_URL_SCHEME_HTTPS: {
 		CString hostName = crack.GetHostName();
 		hostName.MakeLower();
-		if (hostName.Right(10) == "roblox.com") {
+		// Native browser/script privileges belong to these exact services, not
+		// arbitrary wildcard-DNS tenants or names merely ending in roblox.com.
+		if (hostName == "roblox.com" || hostName.Right(11) == ".roblox.com" ||
+			hostName == "blox.ralsei.tech" || hostName == "api.grid.blox.ralsei.tech") {
 			return true;
 		}
 		return false;
@@ -170,6 +194,8 @@ static boost::mutex trustCheckMutex;
 // FUNCTION: ROBLOX 0x00588d00
 bool Http::trustCheck(const char* url)
 {
+	// Asset-only transport access does not grant the native browser bridge.
+	if (AssetProxy::isProxyUrl(url)) return true;
 	{
 		boost::mutex::scoped_lock lock(trustCheckMutex);
 		static boost::scoped_ptr<bool> skipTrustCheck;
@@ -234,18 +260,19 @@ bool Http::trustCheck(const char* url)
 // STUB: ROBLOX 0x0058a9d0
 static void httpGetPost(
 	bool isPost,
-	const std::string& url,
+	const std::string& sourceUrl,
 	std::istream& data,
 	bool compressData,
 	const char* additionalHeaders,
 	std::string& response
 )
 {
+	const std::string url = !isPost && AssetProxy::enabled() ? AssetProxy::url(sourceUrl) : sourceUrl;
 	if (url.empty()) {
 		throw std::runtime_error("empty url");
 	}
 
-	if (!Http::trustCheck(url.c_str())) {
+	if (!Http::trustCheck(sourceUrl.c_str())) {
 		throw std::runtime_error(G3D::format("trust check failed for %s", url.c_str()));
 	}
 
@@ -271,7 +298,8 @@ static void httpGetPost(
 		NULL,
 		NULL,
 		NULL,
-		INTERNET_FLAG_EXISTING_CONNECT | INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_NEED_FILE,
+		INTERNET_FLAG_EXISTING_CONNECT | INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_NEED_FILE |
+			(u.GetScheme() == ATL_URL_SCHEME_HTTPS ? INTERNET_FLAG_SECURE : 0),
 		1
 	));
 	if (!request) {

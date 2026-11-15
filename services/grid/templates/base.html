@@ -1,0 +1,41 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="{{ language }}"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>{% block title %}notblox{% endblock %}</title>
+<link rel="stylesheet" type="text/css" href="/static/site.css">
+<script type="text/javascript">
+(function () {
+ function detectClient() {
+  try {
+   if (window.external.GetApp()) {
+    document.documentElement.className += ' embedded-client';
+    return true;
+   }
+  } catch (e) {}
+  return false;
+ }
+ function afterLoad() {
+  var attempts = 0;
+  function retry() {
+   if (!detectClient() && ++attempts < 20) { window.setTimeout(retry, 250); }
+  }
+  // Wait until the native host has completed navigation before first touching
+  // window.external. MSHTML can otherwise cache its unimplemented fallback.
+  window.setTimeout(retry, 100);
+ }
+ if (window.addEventListener) { window.addEventListener('load', afterLoad, false); }
+ else if (window.attachEvent) { window.attachEvent('onload', afterLoad); }
+}());
+</script>
+{% block head %}{% endblock %}</head>
+<body><div id="page">
+<div id="nav"><b>notblox</b> &nbsp; <a href="/">{{ _("Places") }}</a>
+ &nbsp; <a href="/marketplace">{{ _('Marketplace') }}</a>{% if account_user %} &nbsp; <a href="/friends">{{ _('Friends') }}</a>{% endif %}
+ <span class="client-download-link">&nbsp; <a href="/download">{{ _("Download client") }}</a></span>
+{% if account_user %} &nbsp; <a href="/account">{{ account_user.nickname }}</a>{% else %} &nbsp; <a href="/login">{{ _("Log in") }}</a> &nbsp; <a href="/signin">{{ _("Sign up") }}</a>{% endif %}
+{% if request.is_secure %} &nbsp; {% if session.admin %}<a href="/manage">{{ _("Places admin") }}</a> &nbsp; <a href="/manage/users">{{ _("Users") }}</a> &nbsp; <a href="/manage/registration">{{ _("Registration") }}</a> &nbsp; <a href="/manage/invites">{{ _("Invites") }}</a> &nbsp; <a href="/manage/moderation">{{ _("Moderation") }}</a> &nbsp; <a href="/manage/assets">{{ _("Asset proxy") }}</a>{% else %}<a href="/admin/login">{{ _("Admin sign-in") }}</a>{% endif %}{% endif %}
+<span class="language-switch"> &nbsp; {% if language=='en' %}<b lang="en">English</b>{% else %}<a href="{{ language_url('en') }}" lang="en">English</a>{% endif %} | {% if language=='ru' %}<b lang="ru">Русский</b>{% else %}<a href="{{ language_url('ru') }}" lang="ru">Русский</a>{% endif %}</span></div>
+{% for message in get_flashed_messages() %}<p class="notice">{{ _(message) }}</p>{% endfor %}
+{% block body %}{% endblock %}
+<div id="footer">{{ _("notblox is an independent instance and is not affiliated with Roblox Corporation in any way.") }}</div>
+</div></body></html>

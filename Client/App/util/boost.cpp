@@ -35,10 +35,15 @@ typedef struct tagTHREADNAME_INFO
 	DWORD dwFlags;    // 0x0c
 } THREADNAME_INFO;
 
-// FUNCTION: WEBSERVICE 0x10032390
-// FUNCTION: ROBLOX 0x005a9de0
+// STUB: WEBSERVICE 0x10032390
+// STUB: ROBLOX 0x005a9de0
 void SetThreadName(DWORD dwThreadID, LPCSTR szThreadName)
 {
+#ifdef OPENRBX_NATIVE_SERVER
+	char name[16];
+	snprintf(name, sizeof(name), "%s", szThreadName);
+	pthread_setname_np(pthread_self(), name);
+#else
 	THREADNAME_INFO info;
 	info.dwType = 0x1000;
 	info.szName = szThreadName;
@@ -52,6 +57,7 @@ void SetThreadName(DWORD dwThreadID, LPCSTR szThreadName)
 	}
 	__except (EXCEPTION_CONTINUE_EXECUTION) {
 	}
+#endif
 }
 
 // SIZE 0x8

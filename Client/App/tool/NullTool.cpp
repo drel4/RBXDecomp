@@ -49,8 +49,8 @@ void NewNullTool::onMouseHover(const UIEvent& uiEvent)
 	}
 }
 
-// FUNCTION: WEBSERVICE 0x100c5140
-// FUNCTION: ROBLOX 0x006228d0
+// STUB: WEBSERVICE 0x100c5140
+// STUB: ROBLOX 0x006228d0
 MouseCommand* NewNullTool::onMouseDown(const UIEvent& uiEvent)
 {
 	G3D::Vector3 hitPoint;
@@ -60,6 +60,9 @@ MouseCommand* NewNullTool::onMouseDown(const UIEvent& uiEvent)
 			if (!character->contains(part)) {
 				if (Humanoid* humanoid = Humanoid::modelIsCharacter(character)) {
 					humanoid->moveTo(hitPoint, part);
+					// Clicking starts the walk without dismissing the hover preview.
+					waypoint = hitPoint;
+					hasWaypoint = true;
 				}
 			}
 		}
@@ -80,19 +83,20 @@ NewNullTool::NewNullTool(Workspace* workspace)
 {
 }
 
-// FUNCTION: WEBSERVICE 0x100c5360
-// FUNCTION: ROBLOX 0x00622bc0
+// STUB: WEBSERVICE 0x100c5360
+// STUB: ROBLOX 0x00622bc0
 void NewNullTool::render3dAdorn(Adorn* adorn)
 {
-	if (hasWaypoint) {
-		if (ControllerService* service = ServiceProvider::find<ControllerService>(workspace)) {
-			NavKeys navKeys;
-			service->getHardwareDevice()->getNavKeys(navKeys);
-			if (!navKeys.navKeyDown()) {
-				Humanoid::renderWaypoint(adorn, waypoint);
-			}
-		}
+	// Hover is independent of the clicked movement destination. Clicking or
+	// reaching that destination must not dismiss the cursor's hover preview.
+	if (!hasWaypoint) return;
+	ControllerService* service = ServiceProvider::find<ControllerService>(workspace);
+	if (service && service->getHardwareDevice()) {
+		NavKeys navKeys;
+		service->getHardwareDevice()->getNavKeys(navKeys);
+		if (navKeys.navKeyDown()) return;
 	}
+	Humanoid::renderWaypoint(adorn, waypoint);
 }
 
 } // namespace RBX

@@ -1,4 +1,5 @@
 #include "afxres.h"
+#include "resource.h"
 
 LANGUAGE 0, 0
 
@@ -239,11 +240,14 @@ BEGIN
 	POPUP "&Tools"
 	BEGIN
 		MENUITEM "E&xecute Script...", 33009
+		MENUITEM "Use &Asset Proxy", ID_TOOLS_ASSET_PROXY
 		MENUITEM "&GC", 32986
 		MENUITEM SEPARATOR
 		POPUP "Test"
 		BEGIN
-			MENUITEM "Solo", 33028
+			MENUITEM "&Solo", 33028
+			MENUITEM "&Respawn Local Player", ID_TEST_RESPAWN_LOCAL
+			MENUITEM SEPARATOR
 			MENUITEM "1 Player", 33029
 			MENUITEM "2 Players", 33030
 		END
@@ -318,6 +322,7 @@ BEGIN
 	END
 	POPUP "&Tools"
 	BEGIN
+		MENUITEM "Use &Asset Proxy", ID_TOOLS_ASSET_PROXY
 		MENUITEM "&Settings...", 32989
 	END
 	POPUP "&Help"

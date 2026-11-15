@@ -15,7 +15,7 @@ class __declspec(novtable) CApp : public CComObjectRootEx<CComSingleThreadModel>
 								  public ISupportErrorInfoImpl<&IID_IApp>,
 								  public IObjectSafetyRobloxImpl<CApp, INTERFACESAFE_FOR_UNTRUSTED_CALLER>,
 								  public IObjectWithSiteImpl<CApp>,
-								  public IDispatchImpl<IApp, &IID_IApp, &LIBID_RobloxLib, 1, 2>
+								  public IDispatchImpl<IApp, &IID_IApp, &LIBID_RobloxLib, 0xFFFF, 0xFFFF>
 {
 public:
 	DECLARE_REGISTRY_RESOURCEID(110)

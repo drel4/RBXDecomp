@@ -43,6 +43,9 @@ public:
 	ScriptContext();
 	virtual ~ScriptContext();
 
+#ifdef OPENRBX_NATIVE_SERVER
+#undef Success
+#endif
 	enum Result
 	{
 		Success,

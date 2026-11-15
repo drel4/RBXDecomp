@@ -68,7 +68,7 @@ void DxUserInput::setKeyState(SDLKey key, bool down)
 	m_unk0x17c = down ? key : SDLK_UNKNOWN;
 }
 
-// FUNCTION: ROBLOX 0x0046b9d0
+// STUB: ROBLOX 0x0046b9d0
 void DxUserInput::FUN_0046b9d0()
 {
 	HRESULT hr = m_unk0x188->CreateDevice(GUID_SysMouse, &m_unk0x18c, NULL);
@@ -81,7 +81,7 @@ void DxUserInput::FUN_0046b9d0()
 		AtlThrow(hr);
 	}
 
-	hr = m_unk0x18c->SetCooperativeLevel(m_unk0x184, DISCL_EXCLUSIVE | DISCL_FOREGROUND);
+	hr = m_unk0x18c->SetCooperativeLevel(m_unk0x184, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND);
 	if (FAILED(hr)) {
 		AtlThrow(hr);
 	}
@@ -133,10 +133,13 @@ void DxUserInput::FUN_0046bb10()
 	m_unk0x58 = G3D::Rect2D(G3D::Vector2(rect.Width(), rect.Height()));
 }
 
-// FUNCTION: ROBLOX 0x0046bc20
+// STUB: ROBLOX 0x0046bc20
 void DxUserInput::FUN_0046bc20(const G3D::Vector2& position)
 {
 	ATL::CCritSecLock lock(m_unk0x34);
+	if (mouseReleasedUntilClick || (GetAsyncKeyState(VK_ESCAPE) & 0x8000) || GetForegroundWindow() != m_unk0x184) {
+		return;
+	}
 
 	if (m_unk0x68) {
 		if (FAILED(m_unk0x18c->Acquire())) {
@@ -150,11 +153,14 @@ void DxUserInput::FUN_0046bc20(const G3D::Vector2& position)
 
 	if (m_unk0x180->IsTopParentActive()) {
 		m_unk0x18c->Unacquire();
+		m_unk0x18c->SetCooperativeLevel(m_unk0x184, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
 		m_unk0x68 = SUCCEEDED(m_unk0x18c->Acquire());
 
 		if (m_unk0x68) {
 			G3D::Rect2D rect = m_unk0x58;
 			m_unk0x70 = position - rect.center();
+			updateMouseConfinement();
+			::PostMessage(m_unk0x180->m_hWnd, WM_UPDATE_CURSOR, 0, 0);
 		}
 	}
 }
@@ -163,16 +169,18 @@ void DxUserInput::FUN_0046bc20(const G3D::Vector2& position)
 void DxUserInput::FUN_0046bd60()
 {
 	ATL::CCritSecLock lock(m_unk0x34);
+	bool wanted = m_unk0x78 && !keyboardReleasedUntilClick && viewportHasKeyboardFocus() &&
+		GetForegroundWindow() == m_unk0x184;
 
 	if (m_unk0x190) {
 		if (m_unk0x79 && FAILED(m_unk0x190->Acquire())) {
 			m_unk0x79 = false;
 		}
 
-		if (m_unk0x78 != m_unk0x79 || (m_unk0x79 && m_unk0x7a != true)) {
+		if (wanted != m_unk0x79 || (m_unk0x79 && m_unk0x7a != true)) {
 			m_unk0x190->Unacquire();
 
-			if (m_unk0x78) {
+			if (wanted) {
 				m_unk0x7a = true;
 
 				if (m_unk0x190->SetCooperativeLevel(m_unk0x184, DISCL_EXCLUSIVE | DISCL_FOREGROUND) == DI_OK) {
@@ -181,9 +189,18 @@ void DxUserInput::FUN_0046bd60()
 			}
 			else {
 				m_unk0x79 = false;
+				memset(m_unk0x7b, 0, sizeof(m_unk0x7b));
+				m_unk0x17c = SDLK_UNKNOWN;
 			}
 		}
 	}
+}
+
+bool DxUserInput::viewportHasKeyboardFocus() const
+{
+	GUITHREADINFO info = {sizeof(info)};
+	DWORD thread = GetWindowThreadProcessId(m_unk0x184, NULL);
+	return GetGUIThreadInfo(thread, &info) && info.hwndFocus == m_unk0x180->GetSafeHwnd();
 }
 
 // FUNCTION: ROBLOX 0x0046be50
@@ -234,6 +251,10 @@ void DxUserInput::FUN_0046c090()
 		DWORD scanCode = data[i].dwOfs;
 		SDLMod mod = FUN_0046e2e0(m_unk0x7b);
 		SDLKey key = FUN_0046d6f0(scanCode);
+		if (down && key == SDLK_ESCAPE) {
+			releaseInput(true, true);
+			return;
+		}
 		bool handled = false;
 		if (m_unk0x7a && down && m_unk0x4c) {
 			static HKL layout = GetKeyboardLayout(0);
@@ -257,6 +278,9 @@ void DxUserInput::FUN_0046c090()
 					bool matches =
 						accel.fVirt & FVIRTKEY ? accel.key == virtualKey : accel.key == static_cast<char>(character);
 					if (matches && (accel.fVirt & (FSHIFT | FCONTROL | FALT)) == flags) {
+						// The input worker owns the DataModel lock here. The UI
+						// command handler needs it too: SendMessage deadlocks both
+						// threads (including Copy/Paste/Delete accelerators).
 						::PostMessage(m_unk0x4c->m_hWnd, WM_COMMAND, MAKEWPARAM(m_unk0x50[j].cmd, 1), 0);
 						handled = true;
 						break;
@@ -312,11 +336,11 @@ G3D::Vector2 DxUserInput::FUN_0046c590()
 	return G3D::Vector2(point.x, point.y);
 }
 
-// FUNCTION: ROBLOX 0x0046c600
+// STUB: ROBLOX 0x0046c600
 G3D::Vector2 DxUserInput::getCursorPosition()
 {
 	ATL::CCritSecLock lock(m_unk0x34);
-	return m_unk0x68 ? FUN_0046c4f0() : FUN_0046c590();
+	return m_unk0x68 && m_unk0x6c == WRAP_CENTER ? FUN_0046c4f0() : FUN_0046c590();
 }
 
 // FUNCTION: ROBLOX 0x0046c6a0
@@ -356,18 +380,9 @@ void DxUserInput::FUN_0046c950(const G3D::Vector2& mouseDelta, G3D::Vector2& wra
 {
 	switch (m_unk0x6c) {
 	case WRAP_AUTO:
-		if (FUN_0046b920()) {
-			FUN_0046e530(mouseDelta, wrapMouseDelta, m_unk0x70, G3D::Vector2(FUN_0046b8f0()));
-		}
-		else if (!FUN_0046c780()) {
-			FUN_0046d670(mouseDelta, wrapMouseDelta, m_unk0x70);
-		}
-		else if (FUN_0046b880()) {
-			FUN_0046e560(mouseDelta, wrapMouseDelta, m_unk0x70, FUN_0046b8f0());
-		}
-		else {
-			FUN_0046e5f0(mouseDelta, wrapMouseDelta, m_unk0x70, FUN_0046b8f0());
-		}
+		// Normal pointing must be able to leave every viewport edge, even
+		// while movement keys are held. Camera-look uses WRAP_CENTER instead.
+		m_unk0x70 = FUN_0046c590() - m_unk0x58.center();
 		break;
 	case WRAP_CENTER:
 		FUN_0046d6a0(mouseDelta, wrapMouseDelta, m_unk0x70);
@@ -375,28 +390,65 @@ void DxUserInput::FUN_0046c950(const G3D::Vector2& mouseDelta, G3D::Vector2& wra
 	}
 }
 
-// FUNCTION: ROBLOX 0x0046ca90
+// STUB: ROBLOX 0x0046ca90
 void DxUserInput::FUN_0046ca90()
 {
+	releaseMouse(true);
+}
+
+void DxUserInput::releaseMouse(bool restoreCursor)
+{
 	ATL::CCritSecLock lock(m_unk0x34);
-
-	if (m_unk0x18c && m_unk0x68) {
+	if (mouseConfined) {
+		::ClipCursor(NULL);
+		mouseConfined = false;
+	}
+	bool captured = m_unk0x68;
+	m_unk0x68 = false;
+	// Always unacquire: device loss can leave the cached flag out of sync.
+	if (m_unk0x18c) {
 		m_unk0x18c->Unacquire();
-
+	}
+	if (captured) {
 		G3D::Vector2 position = FUN_0046c4f0();
 		CPoint point(position.x, position.y);
 		m_unk0x180->ClientToScreen(&point);
-		SetCursorPos(point.x, point.y);
-
-		static HCURSOR cursor = AfxGetApp()->LoadStandardCursor(IDC_ARROW);
-		SetCursor(cursor);
+		if (restoreCursor && m_unk0x6c == WRAP_CENTER && GetForegroundWindow() == m_unk0x184) {
+			SetCursorPos(point.x, point.y);
+		}
 
 		m_unk0x180->InvalidateRect(NULL);
-		m_unk0x68 = false;
 	}
+	// Heartbeat runs off the window thread. SetCursor there does not restore
+	// the window thread's cursor, so marshal the update back to the owner.
+	::PostMessage(m_unk0x180->m_hWnd, WM_UPDATE_CURSOR, 0, 0);
 }
 
-// FUNCTION: ROBLOX 0x0046cbc0
+void DxUserInput::releaseInput(bool restoreCursor, bool untilClick, bool pointerUntilClick)
+{
+	ATL::CCritSecLock lock(m_unk0x34);
+	keyboardReleasedUntilClick = untilClick;
+	mouseReleasedUntilClick = untilClick && pointerUntilClick;
+	releaseMouse(restoreCursor);
+	if (m_unk0x190) {
+		m_unk0x190->Unacquire();
+	}
+	m_unk0x78 = false;
+	m_unk0x79 = false;
+	m_unk0x7a = false;
+	m_unk0x6c = WRAP_AUTO;
+	memset(m_unk0x7b, 0, sizeof(m_unk0x7b));
+	m_unk0x17c = SDLK_UNKNOWN;
+}
+
+void DxUserInput::releasePointer(bool restoreCursor)
+{
+	ATL::CCritSecLock lock(m_unk0x34);
+	releaseMouse(restoreCursor);
+	m_unk0x6c = WRAP_AUTO;
+}
+
+// STUB: ROBLOX 0x0046cbc0
 void DxUserInput::FUN_0046cbc0(UINT message, int wParam, LPARAM lParam)
 {
 	switch (message) {
@@ -409,6 +461,16 @@ void DxUserInput::FUN_0046cbc0(UINT message, int wParam, LPARAM lParam)
 	case WM_RBUTTONDOWN:
 	case WM_RBUTTONUP: {
 		G3D::Vector2 position(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		if (message == WM_LBUTTONDOWN || message == WM_RBUTTONDOWN) {
+			mouseReleasedUntilClick = false;
+			keyboardReleasedUntilClick = false;
+			FUN_0046be50(true);
+		}
+		// Buffered DirectInput supplies events while acquired. Do not dispatch
+		// the duplicate Windows mouse messages in non-exclusive mode.
+		if (m_unk0x68) {
+			break;
+		}
 		FUN_0046c3c0(FUN_0046e290(message), position);
 
 		CPoint point(position.x, position.y);
@@ -439,7 +501,7 @@ void DxUserInput::FUN_0046cd90()
 	{
 		ATL::CCritSecLock lock(m_unk0x34);
 		if (!FUN_0046bed0(data, &count, m_unk0x18c)) {
-			m_unk0x68 = false;
+			releasePointer();
 			return;
 		}
 	}
@@ -449,14 +511,20 @@ void DxUserInput::FUN_0046cd90()
 	for (DWORD i = 0; i < count; i++) {
 		switch (data[i].dwOfs) {
 		case DIMOFS_BUTTON0:
-			m_unk0x180->PostMessage(WM_USER + 0xbb);
+			if (data[i].dwData == 0x80) {
+				keyboardReleasedUntilClick = false;
+				m_unk0x180->PostMessage(WM_USER + 0xbb);
+			}
 			FUN_0046c3c0(
 				data[i].dwData == 0x80 ? RBX::UIEvent::MOUSE_LEFT_BUTTON_DOWN : RBX::UIEvent::MOUSE_LEFT_BUTTON_UP,
 				getCursorPosition()
 			);
 			break;
 		case DIMOFS_BUTTON1:
-			m_unk0x180->PostMessage(WM_USER + 0xbb);
+			if (data[i].dwData == 0x80) {
+				keyboardReleasedUntilClick = false;
+				m_unk0x180->PostMessage(WM_USER + 0xbb);
+			}
 			FUN_0046c3c0(
 				data[i].dwData == 0x80 ? RBX::UIEvent::MOUSE_RIGHT_BUTTON_DOWN : RBX::UIEvent::MOUSE_RIGHT_BUTTON_UP,
 				getCursorPosition()
@@ -477,8 +545,12 @@ void DxUserInput::FUN_0046cd90()
 		}
 		}
 
-		if (!m_unk0x68 || !FUN_0046b7f0()) {
+		if (!m_unk0x68) {
 			break;
+		}
+		if (m_unk0x6c == WRAP_AUTO && !FUN_0046b7f0()) {
+			releasePointer(true);
+			return;
 		}
 	}
 
@@ -493,7 +565,7 @@ void DxUserInput::FUN_0046cd90()
 	}
 }
 
-// FUNCTION: ROBLOX 0x0046d0a0
+// STUB: ROBLOX 0x0046d0a0
 void DxUserInput::FUN_0046d0a0()
 {
 	FUN_0046bb10();
@@ -506,22 +578,47 @@ void DxUserInput::FUN_0046d0a0()
 		CClientDC dc(m_unk0x180);
 
 		if (!dc.PtVisible(point)) {
-			FUN_0046ca90();
+			releasePointer(true);
 		}
 	}
 }
 
-// FUNCTION: ROBLOX 0x0046d180
+// STUB: ROBLOX 0x0046d180
 void DxUserInput::onEvent(const RBX::RunService* source, RBX::Heartbeat event)
 {
 	ATL::CCritSecLock lock(m_unk0x34);
+	if ((m_unk0x68 || m_unk0x79) && (GetAsyncKeyState(VK_ESCAPE) & 0x8000)) {
+		releaseInput(true, true);
+		return;
+	}
+	if (GetForegroundWindow() != m_unk0x184 || !m_unk0x180->IsWindowVisible()) {
+		if (m_unk0x68 || m_unk0x79 || m_unk0x78) {
+			releaseInput();
+		}
+		return;
+	}
+
+	// Keyboard ownership follows the clicked/focused control, not the pointer.
+	FUN_0046be50(!keyboardReleasedUntilClick && viewportHasKeyboardFocus());
 
 	if (m_unk0x68) {
-		FUN_0046cd90();
+		G3D::Vector2 physicalPosition = FUN_0046c590();
+		if (!m_unk0x58.contains(physicalPosition)) {
+			releasePointer();
+		}
+		if (m_unk0x6c == WRAP_AUTO) {
+			m_unk0x70 = FUN_0046c590() - m_unk0x58.center();
+			if (!FUN_0046b7f0()) {
+				releasePointer();
+			}
+		}
+		if (m_unk0x68) FUN_0046cd90();
 	}
 
 	if (m_unk0x190) {
-		m_unk0x190->GetDeviceState(sizeof(m_unk0x7b), m_unk0x7b);
+		if (FAILED(m_unk0x190->GetDeviceState(sizeof(m_unk0x7b), m_unk0x7b))) {
+			memset(m_unk0x7b, 0, sizeof(m_unk0x7b));
+		}
 	}
 
 	if (m_unk0x79) {
@@ -538,6 +635,10 @@ void DxUserInput::onEvent(const RBX::RunService* source, RBX::RunTransition even
 // FUNCTION: ROBLOX 0x0046d230
 DxUserInput::~DxUserInput()
 {
+	if (mouseConfined) {
+		::ClipCursor(NULL);
+		mouseConfined = false;
+	}
 	if (m_unk0x194) {
 		RBX::stopListening(
 			m_unk0x194->find<RBX::RunService>(), static_cast<RBX::Listener<RBX::RunService, RBX::Heartbeat>*>(this)
@@ -567,23 +668,50 @@ DxUserInput::~DxUserInput()
 	delete[] m_unk0x50;
 }
 
-// FUNCTION: ROBLOX 0x0046d3f0
+// STUB: ROBLOX 0x0046d3f0
 void DxUserInput::setWrapMode(WrapMode wrapMode)
 {
+	ATL::CCritSecLock lock(m_unk0x34);
+	if (wrapMode == m_unk0x6c) {
+		return;
+	}
+	// Preserve the current cursor anchor for RMB camera-look. Explicit
+	// first-person centering still goes through centerCursor().
 	m_unk0x6c = wrapMode;
+	updateMouseConfinement();
+}
+
+void DxUserInput::updateMouseConfinement()
+{
+	if (m_unk0x68 && m_unk0x6c == WRAP_CENTER && GetForegroundWindow() == m_unk0x184) {
+		G3D::Vector2 anchor = FUN_0046c4f0();
+		CPoint point(anchor.x, anchor.y);
+		m_unk0x180->ClientToScreen(&point);
+		// DirectInput still supplies relative movement while the native pointer
+		// stays at the visible cursor anchor. No hidden drift or release warp.
+		RECT clip = {point.x, point.y, point.x + 1, point.y + 1};
+		mouseConfined = ::ClipCursor(&clip) != FALSE;
+	}
+	else if (mouseConfined) {
+		::ClipCursor(NULL);
+		mouseConfined = false;
+	}
 }
 
 // FUNCTION: ROBLOX 0x0046d400
 void DxUserInput::centerCursor()
 {
+	ATL::CCritSecLock lock(m_unk0x34);
 	m_unk0x70 = G3D::Vector2::zero();
+	updateMouseConfinement();
 }
 
 // STUB: ROBLOX 0x0046d440
 DxUserInput::DxUserInput(CWnd* wnd, RBX::DataModel* dataModel)
-	: m_unk0x50(NULL), m_unk0x54(0), m_unk0x68(false), m_unk0x6c(WRAP_AUTO), m_unk0x78(false), m_unk0x79(false),
-	  m_unk0x7a(false), m_unk0x17c(SDLK_UNKNOWN), m_unk0x180(wnd), m_unk0x184(wnd->GetTopLevelFrame()->GetSafeHwnd()),
-	  m_unk0x194(RBX::shared_from(dataModel))
+	: m_unk0x50(NULL), m_unk0x54(0), m_unk0x68(false), mouseConfined(false), keyboardReleasedUntilClick(false),
+	  m_unk0x6c(WRAP_AUTO), m_unk0x78(false),
+	  m_unk0x79(false), m_unk0x7a(false), mouseReleasedUntilClick(false), m_unk0x17c(SDLK_UNKNOWN), m_unk0x180(wnd),
+	  m_unk0x184(wnd->GetTopLevelFrame()->GetSafeHwnd()), m_unk0x194(RBX::shared_from(dataModel))
 {
 	FUN_0046bb10();
 

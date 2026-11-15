@@ -107,8 +107,10 @@ class CMainFrame : public CXTPMDIFrameWnd, public RBX::Listener<RBX::FillToolCol
 public:
 	CMainFrame();
 	virtual ~CMainFrame();
+	bool isFullscreen() const { return m_unk0xe0; }
 
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);                           // vtable+0x6c
+	virtual void OnUpdateFrameTitle(BOOL bAddToTitle);
 	virtual void ActivateFrame(int nCmdShow = -1);                            // vtable+0x154
 	virtual void OnSetPreviewMode(BOOL bPreview, CPrintPreviewState* pState); // vtable+0x158
 
@@ -170,6 +172,8 @@ protected:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void FUN_00453eb0(CCmdUI* pCmdUI);
 	afx_msg void OnPaint();
+	afx_msg void OnToggleAssetProxy();
+	afx_msg void OnUpdateAssetProxy(CCmdUI* ui);
 
 	DECLARE_MESSAGE_MAP()
 

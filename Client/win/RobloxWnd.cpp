@@ -11,6 +11,7 @@
 #include "RobloxWnd.h"
 
 #include "LogManager.h"
+#include "MainFrm.h"
 #include "RenderSettings.h"
 #include "View.h"
 #include "Workspace.h"
@@ -44,6 +45,7 @@
 #include <GLG3D/VARArea.h>
 #include <GLG3D/Win32Window.h>
 #include <cstdio>
+#include <map>
 #include <stdexcept>
 
 static ATL::CCriticalSection g_unk0x0095448c;
@@ -83,6 +85,19 @@ static void runViewValid(RBX::DataModel* dataModel, RBX::IRunView* runView)
 			runService->runViewValid(runView);
 		}
 	}
+}
+
+// Fixed 30 FPS pacing for both graphics backends, independent of simulation time.
+static std::map<HWND, LONGLONG> lastFrameTimes;
+
+static double frameDelay(HWND window)
+{
+	LARGE_INTEGER now, frequency;
+	QueryPerformanceCounter(&now);
+	QueryPerformanceFrequency(&frequency);
+	std::map<HWND, LONGLONG>::const_iterator previous = lastFrameTimes.find(window);
+	if (previous == lastFrameTimes.end()) return 0.0;
+	return 1.0 / 30.0 - double(now.QuadPart - previous->second) / double(frequency.QuadPart);
 }
 
 static void removeRunView(RBX::DataModel* dataModel, RBX::IRunView* runView)
@@ -142,6 +157,46 @@ void CRobloxWnd::FUN_0045faf0()
 // STUB: ROBLOX 0x0045fb30
 BOOL CRobloxWnd::OnWndMsg(UINT message, WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 {
+	if (m_unk0x7c) {
+		switch (message) {
+		case DxUserInput::WM_UPDATE_CURSOR:
+		case WM_SETCURSOR:
+			if (message == DxUserInput::WM_UPDATE_CURSOR || LOWORD(lParam) == HTCLIENT) {
+				POINT point;
+				GetCursorPos(&point);
+				bool gameCursor = ::WindowFromPoint(point) == m_hWnd &&
+								  ::GetForegroundWindow() == GetTopLevelFrame()->GetSafeHwnd() &&
+								  m_unk0x7c->hasMouseCapture();
+				// Non-exclusive input never saves/restores a hidden cursor.
+				// Only the window thread changes the native cursor shape.
+				SetCursor(gameCursor ? NULL : LoadCursor(NULL, IDC_ARROW));
+				*pResult = TRUE;
+				return TRUE;
+			}
+			break;
+		case WM_CANCELMODE:
+		case WM_CAPTURECHANGED:
+		case WM_ENTERMENULOOP:
+		case WM_ENTERSIZEMOVE:
+			m_unk0x7c->releaseInput(false, true, false);
+			break;
+		case WM_MOUSELEAVE:
+			m_unk0x7c->releasePointer();
+			break;
+		case WM_KEYDOWN:
+			if (wParam == VK_ESCAPE) {
+				m_unk0x7c->releaseInput(true, true);
+				*pResult = 0;
+				return TRUE;
+			}
+			break;
+		case WM_MOUSEMOVE: {
+			TRACKMOUSEEVENT tracking = {sizeof(tracking), TME_LEAVE, m_hWnd, 0};
+			TrackMouseEvent(&tracking);
+			break;
+		}
+		}
+	}
 	bool handled;
 	switch (message) {
 	case WM_KEYDOWN:
@@ -186,11 +241,18 @@ BOOL CRobloxWnd::OnWndMsg(UINT message, WPARAM wParam, LPARAM lParam, LRESULT* p
 	return CWnd::OnWndMsg(message, wParam, lParam, pResult);
 }
 
-// FUNCTION: ROBLOX 0x0045fc50
+void CRobloxWnd::suspendGameInput()
+{
+	// Editor keyboard ownership is sticky, but hovering the viewport may
+	// still show and update the game cursor without stealing keyboard focus.
+	if (m_unk0x7c) m_unk0x7c->releaseInput(false, true, false);
+}
+
+// STUB: ROBLOX 0x0045fc50
 void CRobloxWnd::FUN_0045fc50(bool active)
 {
 	if (!active && m_unk0x7c) {
-		m_unk0x7c->FUN_0046ca90();
+		m_unk0x7c->releaseInput();
 	}
 }
 
@@ -292,13 +354,13 @@ BOOL CRobloxWnd::PreCreateWindow(CREATESTRUCT& cs)
 	return CWnd::PreCreateWindow(cs);
 }
 
-// FUNCTION: ROBLOX 0x00460530
+// STUB: ROBLOX 0x00460530
 void CRobloxWnd::OnKillFocus(CWnd* pNewWnd)
 {
 	FUN_00460430();
 	CWnd::OnKillFocus(pNewWnd);
 	if (m_unk0x7c) {
-		m_unk0x7c->FUN_0046be50(false);
+		m_unk0x7c->releaseInput();
 	}
 }
 
@@ -309,9 +371,12 @@ void CRobloxWnd::OnWindowPosChanging(WINDOWPOS* lpwndpos)
 	FUN_00460430();
 }
 
-// FUNCTION: ROBLOX 0x00460580
+// STUB: ROBLOX 0x00460580
 void CRobloxWnd::OnClose()
 {
+	if (m_unk0x7c) {
+		m_unk0x7c->releaseInput();
+	}
 	FUN_00460430();
 	CWnd::OnClose();
 }
@@ -482,10 +547,12 @@ void CRobloxWnd::FUN_004610a0(int width, int height)
 	m_unk0xb0->m_unk0x08->lookAt(0.0f, 50.0f, 0.0f);
 }
 
-// FUNCTION: ROBLOX 0x00461420
+// STUB: ROBLOX 0x00461420
 void CRobloxWnd::FUN_00461420(int width, int height)
 {
 	G3D::GWindow::Settings settings;
+	// Presentation pacing is handled by the compositor only in fullscreen.
+	settings.asychronous = true;
 	settings.width = width;
 	settings.height = height;
 	settings.stencilBits = 8;
@@ -619,7 +686,7 @@ void CRobloxWnd::FUN_004619e0()
 	m_unk0xac.reset(new RBX::AdornG3D(m_unk0xa4.get()));
 }
 
-// FUNCTION: ROBLOX 0x004622d0
+// STUB: ROBLOX 0x004622d0
 void CRobloxWnd::FUN_004622d0(bool p_unk0x04)
 {
 	m_unk0xa4->pushState();
@@ -641,7 +708,7 @@ void CRobloxWnd::FUN_004622d0(bool p_unk0x04)
 	m_unk0xa4->popState();
 }
 
-// FUNCTION: ROBLOX 0x00462450
+// STUB: ROBLOX 0x00462450
 void CRobloxWnd::FUN_00462450(bool p_unk0x04)
 {
 	if (RBX::Network::Players::findLocalCharacter(m_unk0x70.get()) == NULL) {
@@ -674,7 +741,7 @@ void CRobloxWnd::FUN_00462450(bool p_unk0x04)
 	runViewValid(m_unk0x70.get(), this);
 }
 
-// FUNCTION: ROBLOX 0x00462630
+// STUB: ROBLOX 0x00462630
 void CRobloxWnd::FUN_00462630(bool p_unk0x04)
 {
 	if (!m_unk0x81) {
@@ -764,9 +831,17 @@ bool CRobloxWnd::FUN_00462890()
 	return painted;
 }
 
-// FUNCTION: ROBLOX 0x00462a50
+// STUB: ROBLOX 0x00462a50
 void CRobloxWnd::OnPaint()
 {
+	if (frameDelay(m_hWnd) > 0.0) {
+		ValidateRect(NULL);
+		runViewValid(m_unk0x70.get(), this);
+		return;
+	}
+	LARGE_INTEGER now;
+	QueryPerformanceCounter(&now);
+	lastFrameTimes[m_hWnd] = now.QuadPart;
 	bool painted;
 	if (m_unk0x5c == 2) {
 		painted = FUN_00462890();
@@ -777,6 +852,22 @@ void CRobloxWnd::OnPaint()
 	if (!painted && m_unk0x70) {
 		runViewValid(m_unk0x70.get(), this);
 	}
+}
+
+BOOL CRobloxWnd::renderIdleFrame()
+{
+	if (!m_unk0x70 || !IsWindowVisible() || GetTopLevelParent()->IsIconic()) {
+		return FALSE;
+	}
+	double delay = frameDelay(m_hWnd);
+	if (delay > 0.0) {
+		// Wake immediately for input; never hold the simulation lock while pacing.
+		MsgWaitForMultipleObjects(0, NULL, FALSE, DWORD(delay * 1000.0) + 1, QS_ALLINPUT);
+		return TRUE;
+	}
+	// Paint synchronously only after the message queue (including timers) drains.
+	RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_NOERASE);
+	return TRUE;
 }
 
 // FUNCTION: ROBLOX 0x00462be0
@@ -1024,6 +1115,7 @@ CRobloxWnd::~CRobloxWnd()
 // FUNCTION: ROBLOX 0x00464180
 void CRobloxWnd::OnDestroy()
 {
+	lastFrameTimes.erase(m_hWnd);
 	FUN_00460430();
 	FUN_00463c30(NULL);
 

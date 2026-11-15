@@ -18,7 +18,7 @@
 #include <memory>
 
 // SIZE 0x34
-class __declspec(novtable) CWorkspace : public IDispatchImpl<IWorkspace, &IID_IWorkspace, &LIBID_RobloxLib, 1, 2>,
+class __declspec(novtable) CWorkspace : public IDispatchImpl<IWorkspace, &IID_IWorkspace, &LIBID_RobloxLib, 0xFFFF, 0xFFFF>,
 										public CComObjectRootEx<CComSingleThreadModel>,
 										public CComCoClass<CWorkspace, &CLSID_Workspace>,
 										public ISupportErrorInfoImpl<&IID_IWorkspace>,

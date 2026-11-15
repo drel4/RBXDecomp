@@ -1,0 +1,14 @@
+<roblox version="4">
+<Item class="Workspace"><Properties><string name="Name">Workspace</string></Properties>
+<Item class="Model"><Properties><string name="Name">Group</string></Properties>
+<Item class="Weld"><Properties><Ref name="Part0">visible</Ref><Ref name="Part1">hidden</Ref></Properties></Item>
+<Item class="Part" referent="visible"><Properties>
+<string name="Name">A &amp; B</string>
+<Vector3 name="size"><X>4</X><Y>1</Y><Z>4</Z></Vector3>
+<CoordinateFrame name="CFrame"><X>0</X><Y>0</Y><Z>0</Z></CoordinateFrame>
+</Properties><Item class="Script"><Properties><ProtectedString name="Source"><![CDATA[if 1 < 2 then
+print('a &amp; b')
+end]]> -- &amp; literal</ProtectedString></Properties></Item></Item>
+<Item class="Part" referent="hidden"><Properties><string name="Name">Hidden</string>
+<float name="Transparency">1</float><bool name="CanCollide">true</bool></Properties></Item>
+</Item></Item></roblox>

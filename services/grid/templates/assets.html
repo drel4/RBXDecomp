@@ -1,0 +1,21 @@
+{% extends 'base.html' %}{% block title %}{{ _('Asset proxy') }} - notblox{% endblock %}{% block body %}
+<h1>{{ _('Asset proxy') }}</h1>
+<p>{{ _('Successfully downloaded assets are saved permanently. Cached assets work without Roblox or a valid login cookie.') }}</p>
+{% if message %}<p class="notice">{{ message }}</p>{% endif %}
+<h2>{{ _('Roblox login cookie') }}</h2>
+<p>{{ _('Status') }}: <b>{% if cookie_configured %}{{ _('Configured') }}{% else %}{{ _('Not configured') }}{% endif %}</b></p>
+<p>{{ _('Upload a Netscape cookies.txt export to replace the login cookie. Only the Roblox login cookie is kept; its value is never displayed.') }}</p>
+<form method="post" enctype="multipart/form-data" action="/manage/assets">
+<input type="hidden" name="csrf" value="{{ session.csrf }}"><input type="hidden" name="action" value="cookies">
+<label>{{ _('Cookies file') }} <input type="file" name="cookies" accept=".txt" required></label>
+<p><button type="submit">{{ _('Replace cookie') }}</button></p>
+</form>
+<h2>{{ _('Test asset download') }}</h2>
+<p>{{ _('The teapot mesh ID is prefilled for a quick test. A saved asset tests the archive; an uncached ID also tests Roblox authentication.') }}</p>
+<form method="post" action="/manage/assets">
+<input type="hidden" name="csrf" value="{{ session.csrf }}"><input type="hidden" name="action" value="test">
+<label>{{ _('Asset ID') }} <input type="text" name="asset_id" value="{{ asset_id }}" maxlength="19" required></label>
+<p><button type="submit">{{ _('Test download') }}</button></p>
+</form>
+{% if result %}<p>{{ _('Asset ID') }}: {{ result.id }} &nbsp; {{ _('Bytes') }}: {{ result.size }} &nbsp; {{ _('Cache') }}: {% if result.cached %}{{ _('Saved copy') }}{% else %}{{ _('New download') }}{% endif %} &nbsp; <a href="http://assetproxy.blox.ralsei.tech/{{ result.id }}">{{ _('Download asset') }}</a></p>{% endif %}
+{% endblock %}

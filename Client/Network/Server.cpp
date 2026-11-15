@@ -94,6 +94,12 @@ void Server::start(int port, int threadSleepTime)
 	updateNetworkSimulator();
 }
 
+void Server::setPlayerLimit(int limit)
+{
+	if (limit < 1 || limit > 32) throw std::runtime_error("Player limit must be 1-32");
+	rakPeer->SetMaximumIncomingConnections(limit);
+}
+
 // FUNCTION: WEBSERVICE 0x10199d10
 // FUNCTION: ROBLOX 0x004bbf00
 Server::ClientProxy::ClientProxy(SystemAddress systemAddress, Server* server)
