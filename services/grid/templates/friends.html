@@ -1,15 +1,15 @@
 {% extends 'base.html' %}{% block body %}<h1>{{ _('Friends') }}</h1>
 {% if error %}<p class="notice">{{ _(error) }}</p>{% endif %}
 <form method="post"><input type="hidden" name="csrf" value="{{ session.csrf }}">
-<label for="nickname">{{ _('Add a friend by nickname') }}</label><input id="nickname" name="nickname" maxlength="20" required> <button>{{ _('Send request') }}</button></form>
+<label for="nickname">{{ _('Add a friend by nickname') }}</label><input id="nickname" name="nickname" maxlength="20" required> <button type="submit">{{ _('Send request') }}</button></form>
 <p class="hint">{{ _('Accepted friends appear here with their current game server. Refresh this page to update their status.') }}</p>
 <table class="listing"><tr><th>{{ _('Nickname') }}</th><th>{{ _('Status') }}</th><th>{{ _('Actions') }}</th></tr>
 {% for friend in friends %}<tr><td>{{ friend.nickname }}</td><td>
 {% if friend.accepted %}{% for server in playing.get(friend.friend_id,[]) %}
 <form method="post" action="/play/{{ server.place_id }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><input type="hidden" name="server" value="{{ server.id }}">
-<a href="/places/{{ server.place_id }}">{{ server.title }}</a> — {{ _('Server') }} #{{ server.id }}{% if server.private %} — {{ _('Friends only') }}{% endif %} <button>{{ _('Join friend') }}</button></form>
+<a href="/places/{{ server.place_id }}">{{ server.title }}</a> — {{ _('Server') }} #{{ server.id }}{% if server.private %} — {{ _('Friends only') }}{% endif %} <button type="submit">{{ _('Join friend') }}</button></form>
 {% else %}{{ _('Not playing') }}{% endfor %}
 {% elif friend.requester==account_user.id %}{{ _('Request sent') }}{% else %}{{ _('Wants to be your friend') }}{% endif %}</td><td>
-{% if not friend.accepted and friend.requester!=account_user.id %}<form class="inline" method="post" action="/friends/{{ friend.friend_id }}/accept"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button>{{ _('Accept') }}</button></form>{% endif %}
-<form class="inline" method="post" action="/friends/{{ friend.friend_id }}/remove"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button>{% if friend.accepted %}{{ _('Remove friend') }}{% elif friend.requester==account_user.id %}{{ _('Cancel request') }}{% else %}{{ _('Decline') }}{% endif %}</button></form></td></tr>
+{% if not friend.accepted and friend.requester!=account_user.id %}<form class="inline" method="post" action="/friends/{{ friend.friend_id }}/accept"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button type="submit">{{ _('Accept') }}</button></form>{% endif %}
+<form class="inline" method="post" action="/friends/{{ friend.friend_id }}/remove"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button type="submit">{% if friend.accepted %}{{ _('Remove friend') }}{% elif friend.requester==account_user.id %}{{ _('Cancel request') }}{% else %}{{ _('Decline') }}{% endif %}</button></form></td></tr>
 {% else %}<tr><td colspan="3">{{ _('No friends or requests yet.') }}</td></tr>{% endfor %}</table>{% endblock %}

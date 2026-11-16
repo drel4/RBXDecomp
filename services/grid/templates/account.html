@@ -6,5 +6,5 @@
 <form method="post"><input type="hidden" name="csrf" value="{{ session.csrf }}">
 {% for part in parts %}{% set part_index=loop.index0 %}<label for="{{ part }}">{{ _(part.replace('Arm',' arm').replace('Leg',' leg')) }}</label><select id="{{ part }}" name="{{ part }}">
 {% for number,label in colors.items() %}<option value="{{ number }}"{% if selected[part_index]==number %} selected{% endif %}>{{ _(label) }}</option>{% endfor %}</select>{% endfor %}
-<p><button>{{ _("Save colors") }}</button></p></form>
-<form method="post" action="/logout"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button>{{ _("Log out") }}</button></form>{% endblock %}
+<p><button type="submit">{{ _("Save colors") }}</button></p></form>
+<form method="post" action="/logout"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button type="submit">{{ _("Log out") }}</button></form>{% endblock %}

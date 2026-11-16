@@ -2,4 +2,4 @@
 <form method="post"><input type="hidden" name="csrf" value="{{ session.csrf }}">
 <p><label><input type="radio" name="mode" value="closed"{% if not opened %} checked{% endif %}> {{ _("Closed — invite code required") }}</label>
 <label><input type="radio" name="mode" value="open"{% if opened %} checked{% endif %}> {{ _("Open — anyone can register") }}</label></p>
-<button>{{ _("Save registration setting") }}</button></form><p><a href="/manage/invites">{{ _("Manage invite codes") }}</a></p>{% endblock %}
+<button type="submit">{{ _("Save registration setting") }}</button></form><p><a href="/manage/invites">{{ _("Manage invite codes") }}</a></p>{% endblock %}

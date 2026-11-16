@@ -4,4 +4,4 @@
 <label for="password_mode">{{ _("Password") }}</label><select id="password_mode" name="password_mode"><option value="keep">{{ _("Keep existing password") }}</option><option value="random">{{ _("Generate random password") }}</option><option value="custom">{{ _("Set an admin-chosen password") }}</option></select>
 <label for="password">{{ _("Admin-chosen password (12-128 characters; only used if selected above)") }}</label><input id="password" name="password" type="password" maxlength="128" autocomplete="new-password">
 <p>{{ _("Changing a password logs this user out. Changing their nickname or password disconnects their game sessions.") }}</p>
-<p><button>{{ _("Save user") }}</button> <a href="/manage/users">{{ _("Cancel") }}</a></p></form>{% endblock %}
+<p><button type="submit">{{ _("Save user") }}</button> <a href="/manage/users">{{ _("Cancel") }}</a></p></form>{% endblock %}

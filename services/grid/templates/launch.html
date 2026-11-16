@@ -3,7 +3,7 @@
 {% if failed %}<p>{{ _("The game server could not start. Try again later.") }}</p>
 {% elif not ready %}<p>{{ _("Starting server...") }}</p>
 {% else %}<p id="status">{{ _("The server is ready.") }}</p>
-<p><button onclick="launchGame()">{{ _("Open game") }}</button></p>
+<p><button type="button" onclick="launchGame()">{{ _("Open game") }}</button></p>
 <p class="hint">{{ _("Use the client's built-in browser to open the game.") }}</p>
 <script type="text/javascript">
 var gameWindow;

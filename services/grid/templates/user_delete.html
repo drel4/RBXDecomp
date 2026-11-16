@@ -1,4 +1,4 @@
 {% extends 'base.html' %}{% block body %}<h1>{{ _("Remove user") }}</h1>
 <p>{{ _("Permanently remove") }} <b>{{ user.nickname }}</b> {{ _("from this instance? Their account, saved colors and sessions will be deleted. This cannot be undone.") }}</p>
 <form method="post"><input type="hidden" name="csrf" value="{{ session.csrf }}"><input type="hidden" name="confirm" value="delete">
-<button>{{ _("Remove user permanently") }}</button> <a href="/manage/users">{{ _("Cancel") }}</a></form>{% endblock %}
+<button type="submit">{{ _("Remove user permanently") }}</button> <a href="/manage/users">{{ _("Cancel") }}</a></form>{% endblock %}

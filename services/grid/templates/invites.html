@@ -4,8 +4,8 @@
 <label for="uses">{{ _("People per code") }}</label><input id="uses" name="uses" value="1" size="5" maxlength="5">
 <label for="duration">{{ _("Valid for (0 means no expiry)") }}</label><input id="duration" name="duration" value="7" size="5" maxlength="6">
 <select name="unit"><option value="days">{{ _("Days") }}</option><option value="hours">{{ _("Hours") }}</option><option value="minutes">{{ _("Minutes") }}</option></select>
-<p><button>{{ _("Create codes") }}</button></p></form>
+<p><button type="submit">{{ _("Create codes") }}</button></p></form>
 <table class="listing"><tr><th>{{ _("Code") }}</th><th>{{ _("Uses") }}</th><th>{{ _("Expires") }}</th><th>{{ _("Status") }}</th><th></th></tr>
 {% for invite in invites %}<tr><td><code>{{ invite.code }}</code></td><td>{{ invite.uses }}/{{ invite.max_uses }}</td><td>{{ invite.expires|utcdate }}</td>
 <td>{{ _('Revoked' if invite.revoked else 'Used up' if invite.uses>=invite.max_uses else 'Expired' if invite.expires and invite.expires<=now else 'Available') }}</td>
-<td>{% if not invite.revoked %}<form method="post" action="/manage/invites/{{ invite.id }}/revoke"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button>{{ _("Revoke") }}</button></form>{% endif %}</td></tr>{% endfor %}</table>{% endblock %}
+<td>{% if not invite.revoked %}<form method="post" action="/manage/invites/{{ invite.id }}/revoke"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button type="submit">{{ _("Revoke") }}</button></form>{% endif %}</td></tr>{% endfor %}</table>{% endblock %}

@@ -15,7 +15,7 @@
 <h2>{{ _("Servers") }}</h2><p><a href="/places/{{ place.id }}">{{ _("Refresh") }}</a></p>
 {% if servers %}<table class="listing"><tr><th>{{ _("Server") }}</th><th>{{ _("Players") }}</th><th>{{ _("Status") }}</th></tr>
 {% for s in servers %}<tr><td>#{{ s.id }}{% if s.private_owner %} — {{ _('Friends only') }}{% endif %}</td><td>{{ s.players }}/{{ s.limit }}</td><td>{{ _(s.state) }}
-{% if account_user and s.private_owner==account_user.id %}<form method="post" action="/servers/{{ s.id }}/stop"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button>{{ _('Stop my private server') }}</button></form>{% endif %}
+{% if account_user and s.private_owner==account_user.id %}<form method="post" action="/servers/{{ s.id }}/stop"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button type="submit">{{ _('Stop my private server') }}</button></form>{% endif %}
 </td></tr>{% endfor %}</table>{% else %}<p>{{ _("No running servers.") }}</p>{% endif %}
 <p><a href="/asset/{{ place.id }}">{{ _("Download place (.rbxl)") }}</a></p>
 {% endblock %}
